@@ -1,0 +1,30 @@
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
+
+# .NET build output (file-based apps cache)
+bin/
+obj/
+
+# .NET temp/cache for file-based apps
+%TEMP%/dotnet/
+/tmp/dotnet/
+
+# User secrets
+secrets.json
+
+# VS Code
+.vscode/*
+!.vscode/tasks.json
+!.vscode/extensions.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Rider / VS
+.idea/
+*.user
+*.suo
+.vs/
