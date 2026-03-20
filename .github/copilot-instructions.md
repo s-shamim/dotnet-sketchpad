@@ -272,6 +272,9 @@ When a UI is needed, put files in `wwwroot/` using this CDN-based stack (no buil
 <html>
 
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>app</title>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -291,8 +294,13 @@ When a UI is needed, put files in `wwwroot/` using this CDN-based stack (no buil
 ```jsx
 function App() {
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <h1 className="text-2xl font-bold">Hello</h1>
+    <div className="min-h-screen bg-white">
+      <div className="max-w-md mx-auto pt-20 px-4">
+        <h1 className="text-3xl font-light tracking-widest text-gray-800 mb-8 lowercase">
+          app
+        </h1>
+        {/* content */}
+      </div>
     </div>
   );
 }
@@ -305,6 +313,136 @@ Rules:
 - One `script.jsx` per app; split into multiple `.jsx` files only if complexity demands it
 - Use Tailwind utility classes only — no custom CSS files unless necessary
 - `App.cs` must always include `app.UseDefaultFiles()` and `app.UseStaticFiles()`
+
+---
+
+## UI Design System
+
+All UIs in this repo share a consistent visual language. Apply these rules to every `script.jsx`.
+The reference implementation is `todo-app/wwwroot/script.jsx`.
+
+### Tone
+Clean, minimal, quiet. White background, gray text, no decorative color.
+Everything lowercase in labels, headings, and buttons.
+
+### Layout
+```jsx
+// Always: white page, centered single column, generous top padding
+<div className="min-h-screen bg-white">
+  <div className="max-w-md mx-auto pt-20 px-4">
+    ...
+  </div>
+</div>
+```
+
+### Page Title / Heading
+```jsx
+// Large, light weight, wide tracking, lowercase
+<h1 className="text-3xl font-light tracking-widest text-gray-800 mb-8 lowercase">
+  my app
+</h1>
+```
+
+### Section Headings
+```jsx
+// Smaller, uppercase tracking for sub-sections
+<h2 className="text-xs tracking-widest text-gray-400 uppercase mb-4">
+  section title
+</h2>
+```
+
+### Text Input
+```jsx
+// Borderless except bottom border — no box, no rounded corners
+<input
+  type="text"
+  placeholder="placeholder..."
+  className="flex-1 border-b border-gray-300 py-2 text-gray-700 placeholder-gray-300 focus:outline-none focus:border-gray-500 text-sm"
+/>
+```
+
+### Buttons
+```jsx
+// Primary action — text only, no background, subtle hover
+<button className="text-gray-400 hover:text-gray-700 text-sm px-2 transition-colors">
+  save
+</button>
+
+// Destructive — hidden until hover on parent (use `group` + `group-hover`)
+<button className="text-gray-200 hover:text-red-400 opacity-0 group-hover:opacity-100 text-xs transition-all">
+  ✕
+</button>
+
+// Active/selected state — darken text, no background
+<button className={`lowercase transition-colors ${active ? 'text-gray-700' : 'text-gray-400 hover:text-gray-600'}`}>
+  filter
+</button>
+```
+
+### Lists / Rows
+```jsx
+// Divider lines only — no cards, no shadows, no rounded containers
+<ul className="divide-y divide-gray-100">
+  <li className="flex items-center gap-3 py-3 group">
+    ...
+  </li>
+</ul>
+```
+
+### Completed / Muted State
+```jsx
+// Strikethrough + light gray for done/inactive items
+<span className={`text-sm ${done ? 'line-through text-gray-300' : 'text-gray-700'}`}>
+  item text
+</span>
+```
+
+### Checkboxes
+```jsx
+// Muted gray accent — never blue
+<input type="checkbox" className="accent-gray-400 w-4 h-4 cursor-pointer" />
+```
+
+### Empty State
+```jsx
+// Centered, quiet, light gray
+<p className="text-center text-gray-300 text-sm py-8">
+  nothing here yet.
+</p>
+```
+
+### Footer / Meta Info
+```jsx
+// Small, gray, space-between layout
+<div className="flex items-center justify-between mt-6 text-xs text-gray-400">
+  <span>3 items</span>
+  <div className="flex gap-3">
+    {/* filter buttons etc */}
+  </div>
+</div>
+```
+
+### Color Palette (Tailwind only)
+| Role | Class |
+|---|---|
+| Page background | `bg-white` |
+| Primary text | `text-gray-700` |
+| Secondary / meta text | `text-gray-400` |
+| Placeholder / muted | `text-gray-300` |
+| Borders / dividers | `border-gray-100`, `border-gray-300` |
+| Input focus border | `focus:border-gray-500` |
+| Hover (text) | `hover:text-gray-700` |
+| Destructive hover | `hover:text-red-400` |
+| Checkbox accent | `accent-gray-400` |
+| Active/selected text | `text-gray-700` (darker than default) |
+
+### What NOT to do in UI
+- ❌ No colored backgrounds (`bg-blue-500`, `bg-purple-*` etc.)
+- ❌ No rounded buttons (`rounded-lg`, `rounded-full`)
+- ❌ No card shadows (`shadow-*`)
+- ❌ No bold buttons or filled button backgrounds
+- ❌ No PascalCase or Title Case in labels — always `lowercase`
+- ❌ No icons libraries — use plain unicode (`✕`, `→`) only if needed
 
 ---
 
