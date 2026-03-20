@@ -256,5 +256,5 @@ Console.WriteLine(schema.ToJson());
 
 ## Requirements
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- [VS Code](https://code.visualstudio.com/) with the [C# Dev Kit](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit) extension
+- .NET 10 SDK
+- VS Code with the C# Dev Kit extension
