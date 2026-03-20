@@ -1,7 +1,7 @@
 function JsonYamlTool() {
-  const [input,  setInput]  = React.useState('');
+  const [input, setInput] = React.useState('');
   const [output, setOutput] = React.useState('');
-  const [error,  setError]  = React.useState('');
+  const [error, setError] = React.useState('');
 
   async function run(endpoint) {
     setError(''); setOutput('');

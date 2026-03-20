@@ -36,7 +36,7 @@ function Btn({ children, onClick, disabled }) {
   );
 }
 
-function TArea({ value, onChange, placeholder, readOnly, rows = 8 }) {
+function TArea({ value, onChange, placeholder, readOnly, rows = 20 }) {
   return (
     <textarea
       value={value}

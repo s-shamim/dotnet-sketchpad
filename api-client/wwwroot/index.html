@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>api client</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500&family=Geist:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    html, body, #root { height: 100%; margin: 0; padding: 0; overflow: hidden; }
+    body { font-family: 'Geist', sans-serif; }
+    .font-mono-geist { font-family: 'Geist Mono', monospace; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 2px; }
+
+    /* Select reset */
+    select { -webkit-appearance: auto; }
+
+    /* Tab underline active */
+    .tab-active { border-bottom: 1.5px solid #111; color: #111; }
+
+    /* Drag handle cursor */
+    .drag-h { cursor: row-resize; }
+    .drag-v { cursor: col-resize; }
+
+    /* Send button emphasis */
+    .send-emphasis { border-bottom: 1.5px solid #111; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" src="components/UrlBar.jsx" data-type="module"></script>
+  <script type="text/babel" src="components/Sidebar.jsx" data-type="module"></script>
+  <script type="text/babel" src="components/RequestPane.jsx" data-type="module"></script>
+  <script type="text/babel" src="components/ResponsePane.jsx" data-type="module"></script>
+  <script type="text/babel" src="components/BottomBar.jsx" data-type="module"></script>
+  <script type="text/babel" src="components/EnvModal.jsx" data-type="module"></script>
+  <script type="text/babel" src="script.jsx" data-type="module"></script>
+</body>
+</html>
