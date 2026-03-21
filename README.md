@@ -37,16 +37,29 @@ No project setup, no boilerplate. Great for scripts, prototypes, and learning.
   │   ├── appsettings.json
   │   └── 📁 wwwroot/
   │       ├── index.html
+  │       └── script.jsx          ← single JSX file for simple UIs
+  │
+  ├── 📁 json-explorer/           ← folder app (has SQLite + UI)
+  │   ├── App.cs
+  │   ├── app.run.json
+  │   ├── appsettings.json
+  │   ├── app.db                  ← SQLite database
+  │   └── 📁 wwwroot/
+  │       ├── index.html
   │       └── script.jsx
   │
-  └── 📁 json-explorer/           ← folder app (has SQLite + UI)
+  └── 📁 dev-tools/               ← complex UI (multi-file JSX)
       ├── App.cs
       ├── app.run.json
-      ├── appsettings.json
-      ├── app.db                  ← SQLite database
       └── 📁 wwwroot/
-          ├── index.html
-          └── script.jsx
+          ├── index.html          ← loads all .jsx files; app.jsx last
+          ├── app.jsx             ← shared helpers, primitives, ReactDOM.render
+          ├── converters/
+          │   ├── JsonYaml.jsx
+          │   └── Base64Text.jsx
+          └── generators/
+              ├── Password.jsx
+              └── Uuid.jsx
 ```
 
 ### Rules
@@ -237,6 +250,10 @@ function App() {
 
 ReactDOM.render(<App />, document.getElementById('root'));
 ```
+
+For complex UIs with many views or tool categories, split into multiple `.jsx` files organized into subfolders (e.g. `views/`, `converters/`). Use `app.jsx` as the entry point instead of `script.jsx` — it defines shared helpers and primitives, and mounts the app. In `index.html`, load all component files first and `app.jsx` last. No `import`/`export` — Babel standalone loads everything into global scope.
+
+Reference implementations: `dev-tools/` (tool categories) · `anki-ui/` (tab-based views).
 
 ---
 

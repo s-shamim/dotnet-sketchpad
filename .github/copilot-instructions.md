@@ -107,7 +107,7 @@ Assign a **unique port** per app to avoid conflicts.
     "http": {
       "commandName": "Project",
       "dotnetRunMessages": true,
-      "launchBrowser": false,
+      "launchBrowser": true,
       "applicationUrl": "http://localhost:5100",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
@@ -310,9 +310,119 @@ ReactDOM.render(<App />, document.getElementById('root'));
 
 Rules:
 - All CDN `<script>` tags go in `index.html` only — never in `.jsx`
-- One `script.jsx` per app; split into multiple `.jsx` files only if complexity demands it
+- One `script.jsx` per app; for complex multi-view apps use the multi-file pattern below
 - Use Tailwind utility classes only — no custom CSS files unless necessary
 - `App.cs` must always include `app.UseDefaultFiles()` and `app.UseStaticFiles()`
+
+---
+
+## Multi-File JSX (Complex UIs)
+
+Use this pattern only when the UI has many distinct views or tool categories (e.g. `dev-tools/`, `anki-ui/`). For simple apps, one `script.jsx` is enough.
+
+### When to split
+
+| Situation | Convention |
+|---|---|
+| 1–2 views, simple interactions | Single `script.jsx` |
+| Many views, tools, or feature categories | Multi-file JSX with `app.jsx` as entry point |
+
+### Key rules
+
+- Entry point is `app.jsx` (not `script.jsx`) — defines shared helpers, UI primitives, and calls `ReactDOM.render`
+- Component files use **no `import`/`export`** — Babel standalone loads each file into global scope via `<script>` tags
+- Shared primitives defined in `app.jsx` are available to all component files because React only calls function bodies at render time — by then all scripts are loaded
+- **Load order in `index.html` matters**: all leaf component files first, `app.jsx` last
+
+### Folder layout
+
+Organize by category under `wwwroot/`:
+
+```
+wwwroot/
+  index.html         ← loads all .jsx files; app.jsx last
+  app.jsx            ← shared helpers, UI primitives, root App, ReactDOM.render
+  views/             ← full-page views (tab/route-based apps like anki-ui)
+    AddNote.jsx
+    AllNotes.jsx
+  converters/        ← tool category (multi-tool apps like dev-tools)
+    JsonYaml.jsx
+  generators/
+    Password.jsx
+```
+
+### `index.html` — load order
+
+```html
+<!-- leaf components first, app last -->
+<script type="text/babel" src="views/AllNotes.jsx"></script>
+<script type="text/babel" src="views/AddNote.jsx"></script>
+
+<!-- app.jsx last: defines shared helpers + mounts the app -->
+<script type="text/babel" src="app.jsx"></script>
+```
+
+### `app.jsx` structure
+
+```jsx
+// ── Shared helpers (API calls, utilities) ────────────────
+async function api(method, path, body = null) { ... }
+
+// ── Shared UI primitives (available to all component files) ──
+function Btn({ children, onClick, disabled }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="text-gray-400 hover:text-gray-700 text-sm px-2 transition-colors disabled:opacity-30 lowercase"
+    >
+      {children}
+    </button>
+  );
+}
+
+// ── Root App component ───────────────────────────────────
+function App() {
+  const [activeTab, setActiveTab] = React.useState('tab1');
+
+  const views = {
+    'tab1': <Tab1Component />,
+    'tab2': <Tab2Component />,
+  };
+
+  return (
+    <div className="min-h-screen bg-white">
+      <div className="max-w-2xl mx-auto pt-20 px-4">
+        {/* nav + active view */}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById('root'));
+```
+
+### Leaf component file (e.g. `views/AddNote.jsx`)
+
+```jsx
+// No imports — React and shared helpers/primitives are global
+function AddNote({ decks, onMutate }) {
+  const [input, setInput] = React.useState('');
+
+  return (
+    <div>
+      <input
+        value={input}
+        onChange={e => setInput(e.target.value)}
+        className="flex-1 border-b border-gray-300 py-2 text-gray-700 focus:outline-none text-sm"
+      />
+      <Btn onClick={() => { /* Btn is defined in app.jsx */ }}>save</Btn>
+    </div>
+  );
+}
+```
+
+Reference implementations: `anki-ui/` (tab-based views) · `dev-tools/` (tool categories).
 
 ---
 
