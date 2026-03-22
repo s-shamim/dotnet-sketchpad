@@ -50,6 +50,7 @@ dev-tools/
       HashGenerator.jsx
       FakeData.jsx
       JwtGenerator.jsx
+      JwtSchemaGen.jsx
     cryptography/
       AesEncryptDecrypt.jsx
     text/
