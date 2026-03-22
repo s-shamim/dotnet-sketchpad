@@ -1,12 +1,13 @@
 function UuidTool() {
   const [uuids, setUuids] = React.useState([]);
   const [count, setCount] = React.useState(5);
+  const [type,  setType]  = React.useState('v4');
   const [error, setError] = React.useState('');
 
   async function generate() {
     setError('');
     try {
-      const data = await apiGet(`/api/generators/uuid/batch?count=${count}`);
+      const data = await apiGet(`/api/generators/uuid/batch?count=${count}&type=${type}`);
       if (data.error) setError(data.error);
       else setUuids(data.results);
     } catch { setError('Connection failed.'); }
@@ -16,10 +17,21 @@ function UuidTool() {
 
   return (
     <div>
-      <PageTitle sub="version 4 · random">uuid generator</PageTitle>
+      <PageTitle sub="version 4 · empty (nil)">uuid generator</PageTitle>
 
       <div className="flex items-center gap-4 mb-8">
-        <span className="text-xs text-gray-400">count</span>
+        <span className="text-xs text-gray-400">type</span>
+        <div className="flex gap-3">
+          {['v4', 'empty'].map(t => (
+            <button key={t}
+              onClick={() => setType(t)}
+              className={`text-sm lowercase transition-colors ${type === t ? 'text-gray-700' : 'text-gray-400 hover:text-gray-600'}`}
+            >
+              {t === 'empty' ? 'empty (nil)' : t}
+            </button>
+          ))}
+        </div>
+        <span className="text-xs text-gray-400 ml-4">count</span>
         <input
           type="number" value={count} min={1} max={50}
           onChange={e => setCount(Number(e.target.value))}

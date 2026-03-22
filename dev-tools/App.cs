@@ -4,6 +4,8 @@
 #:package QRCoder@1.*
 #:package JsonSchema.Net@7.*
 #:package Bogus@35.*
+#:package Cronos@0.8.*
+#:package BCrypt.Net-Next@4.*
 
 using System.Net;
 using System.Security.Cryptography;
@@ -14,6 +16,7 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
 using Bogus;
+using Cronos;
 using Json.Schema;
 using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
@@ -27,16 +30,47 @@ app.UseStaticFiles();
 // ── Crypto (2) ────────────────────────────────────────────
 var crypto = app.MapGroup("/api/crypto");
 
-crypto.MapPost("/aes-encrypt", (AesEncReq r) => R.Try(() =>
+crypto.MapPost("/aes-encrypt", (AesReq r) => R.Try(() =>
 {
-    var result = AesHelper.Encrypt(r.Text, r.Key, r.Iv);
-    return new { result };
+    if (string.IsNullOrEmpty(r.Password)) throw new Exception("Password is required.");
+    var salt = RandomNumberGenerator.GetBytes(16);
+    var iv   = RandomNumberGenerator.GetBytes(16);
+    var key  = Rfc2898DeriveBytes.Pbkdf2(r.Password, salt, 100_000, HashAlgorithmName.SHA256, 32);
+    using var aes = Aes.Create();
+    aes.Mode    = CipherMode.CBC;
+    aes.Padding = PaddingMode.PKCS7;
+    aes.Key     = key;
+    aes.IV      = iv;
+    using var ms = new MemoryStream();
+    using (var cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write))
+    using (var sw = new StreamWriter(cs))
+        sw.Write(r.Text);
+    var cipher   = ms.ToArray();
+    var combined = new byte[salt.Length + iv.Length + cipher.Length];
+    Buffer.BlockCopy(salt,   0, combined, 0,                          salt.Length);
+    Buffer.BlockCopy(iv,     0, combined, salt.Length,                iv.Length);
+    Buffer.BlockCopy(cipher, 0, combined, salt.Length + iv.Length,    cipher.Length);
+    return new { result = Convert.ToBase64String(combined) };
 }));
 
-crypto.MapPost("/aes-decrypt", (AesDecReq r) => R.Try(() =>
+crypto.MapPost("/aes-decrypt", (AesReq r) => R.Try(() =>
 {
-    var result = AesHelper.Decrypt(r.CipherText, r.Key, r.Iv);
-    return new { result };
+    if (string.IsNullOrEmpty(r.Password)) throw new Exception("Password is required.");
+    var combined = Convert.FromBase64String(r.Text.Trim());
+    if (combined.Length < 33) throw new Exception("Ciphertext too short — was it encrypted with this tool?");
+    var salt   = combined[..16];
+    var iv     = combined[16..32];
+    var cipher = combined[32..];
+    var key    = Rfc2898DeriveBytes.Pbkdf2(r.Password, salt, 100_000, HashAlgorithmName.SHA256, 32);
+    using var aes = Aes.Create();
+    aes.Mode    = CipherMode.CBC;
+    aes.Padding = PaddingMode.PKCS7;
+    aes.Key     = key;
+    aes.IV      = iv;
+    using var ms = new MemoryStream(cipher);
+    using var cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Read);
+    using var sr = new StreamReader(cs);
+    return new { result = sr.ReadToEnd() };
 }));
 
 // ── Converters (7) ────────────────────────────────────────
@@ -235,6 +269,13 @@ fmt.MapPost("/json-parse", (TextReq r) => R.Try(() =>
     return new { result };
 }));
 
+fmt.MapPost("/diff", (DiffReq r) => R.Try(() =>
+{
+    var left  = (r.Left  ?? "").Split('\n');
+    var right = (r.Right ?? "").Split('\n');
+    return new { hunks = DiffHelper.Compute(left, right) };
+}));
+
 // ── Validators (5) ────────────────────────────────────────
 var vld = app.MapGroup("/api/validators");
 
@@ -292,6 +333,32 @@ vld.MapPost("/ip", (TextReq r) =>
     return Results.Ok(new { valid = false, version = (string?)null, error = $"'{input}' is not a valid IP address" });
 });
 
+vld.MapPost("/cron", (TextReq r) =>
+{
+    try
+    {
+        var expr = r.Text.Trim();
+        CronExpression cron;
+        try   { cron = CronExpression.Parse(expr, CronFormat.IncludeSeconds); }
+        catch { cron = CronExpression.Parse(expr, CronFormat.Standard); }
+        var now    = DateTime.UtcNow;
+        var nexts  = new List<string>();
+        var cursor = now;
+        for (int i = 0; i < 5; i++)
+        {
+            var next = cron.GetNextOccurrence(cursor, TimeZoneInfo.Utc);
+            if (next == null) break;
+            nexts.Add(next.Value.ToString("yyyy-MM-dd HH:mm:ss") + " UTC");
+            cursor = next.Value;
+        }
+        return Results.Ok(new { valid = true, nextOccurrences = nexts, error = (string?)null });
+    }
+    catch (Exception ex)
+    {
+        return Results.Ok(new { valid = false, nextOccurrences = Array.Empty<string>(), error = ex.Message });
+    }
+});
+
 // ── Generators (7) ────────────────────────────────────────
 var gen = app.MapGroup("/api/generators");
 
@@ -303,8 +370,10 @@ gen.MapPost("/password", (PasswordReq r) => R.Try(() =>
 
 gen.MapGet("/uuid", () => new { result = Guid.NewGuid().ToString() });
 
-gen.MapGet("/uuid/batch", (int count) =>
-    new { results = Enumerable.Range(0, Math.Clamp(count, 1, 50)).Select(_ => Guid.NewGuid().ToString()).ToList() });
+gen.MapGet("/uuid/batch", (int count, string? type) =>
+    new { results = Enumerable.Range(0, Math.Clamp(count, 1, 50)).Select(_ =>
+        (type ?? "v4") == "empty" ? Guid.Empty.ToString() : Guid.NewGuid().ToString()
+    ).ToList() });
 
 gen.MapPost("/qrcode", (TextReq r) => R.Try(() =>
 {
@@ -317,6 +386,8 @@ gen.MapPost("/qrcode", (TextReq r) => R.Try(() =>
 
 gen.MapPost("/hash", (HashReq r) => R.Try(() =>
 {
+    if (r.Algorithm.Equals("bcrypt", StringComparison.OrdinalIgnoreCase))
+        return new { result = BCrypt.Net.BCrypt.HashPassword(r.Text, workFactor: 12) };
     var bytes = Encoding.UTF8.GetBytes(r.Text);
     byte[] hash = r.Algorithm.ToLower() switch
     {
@@ -349,15 +420,23 @@ gen.MapPost("/fake-data", (FakeDataReq r) => R.Try(() =>
     return new { records };
 }));
 
+gen.MapPost("/json-schema", (TextReq r) => R.Try(() =>
+{
+    if (string.IsNullOrWhiteSpace(r.Text)) throw new Exception("Input JSON is required.");
+    var root   = JsonNode.Parse(r.Text) ?? throw new Exception("Invalid JSON");
+    var schema = JsonSchemaGenerator.FromNode(root);
+    return new { result = JsonSerializer.Serialize(schema, new JsonSerializerOptions { WriteIndented = true }) };
+}));
+
 app.Run();
 
 // ── Records ───────────────────────────────────────────────
 record TextReq(string Text);
 record UnixReq(long Unix);
 record NumberBaseReq(string Value, string From);
-record AesEncReq(string Text, string Key, string Iv);
-record AesDecReq(string CipherText, string Key, string Iv);
+record AesReq(string Text, string Password);
 record JwtEncReq(string Payload, string Secret);
+record DiffReq(string? Left, string? Right);
 record RegexReq(string Pattern, string Input, string Flags);
 record LoremReq(int Paragraphs);
 record PasswordReq(int Length, bool Upper, bool Lower, bool Digits, bool Symbols);
@@ -434,34 +513,78 @@ static class YamlConvert
     }
 }
 
-// ── AES Helper ────────────────────────────────────────────
-static class AesHelper
+// ── JSON Schema Generator ─────────────────────────────────
+static class JsonSchemaGenerator
 {
-    public static string Encrypt(string plainText, string key, string iv)
+    public static JsonObject FromNode(JsonNode? node)
     {
-        using var aes = Aes.Create();
-        aes.Mode    = CipherMode.CBC;
-        aes.Padding = PaddingMode.PKCS7;
-        aes.Key     = Encoding.UTF8.GetBytes(key);
-        aes.IV      = Encoding.UTF8.GetBytes(iv);
-        using var ms = new MemoryStream();
-        using (var cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write))
-        using (var sw = new StreamWriter(cs))
-            sw.Write(plainText);
-        return Convert.ToBase64String(ms.ToArray());
+        if (node is null) return new JsonObject { ["type"] = "null" };
+        if (node is JsonObject obj)
+        {
+            var props = new JsonObject();
+            var required = new JsonArray();
+            foreach (var kv in obj)
+            {
+                props[kv.Key] = FromNode(kv.Value);
+                required.Add(kv.Key);
+            }
+            return new JsonObject
+            {
+                ["type"]                 = "object",
+                ["properties"]          = props,
+                ["required"]            = required,
+                ["additionalProperties"] = false
+            };
+        }
+        if (node is JsonArray arr)
+        {
+            var itemSchema = arr.Count > 0
+                ? FromNode(arr[0])
+                : new JsonObject { ["type"] = "string" };
+            return new JsonObject { ["type"] = "array", ["items"] = itemSchema };
+        }
+        if (node is JsonValue val)
+        {
+            if (val.TryGetValue<bool>(out _))   return new JsonObject { ["type"] = "boolean" };
+            if (val.TryGetValue<long>(out _))   return new JsonObject { ["type"] = "integer" };
+            if (val.TryGetValue<double>(out _)) return new JsonObject { ["type"] = "number" };
+            if (val.TryGetValue<string>(out _)) return new JsonObject { ["type"] = "string" };
+        }
+        return new JsonObject { ["type"] = "string" };
     }
+}
 
-    public static string Decrypt(string cipherText, string key, string iv)
+// ── Diff Helper ───────────────────────────────────────────
+static class DiffHelper
+{
+    public record Hunk(string type, string line);
+
+    public static List<Hunk> Compute(string[] left, string[] right)
     {
-        using var aes = Aes.Create();
-        aes.Mode    = CipherMode.CBC;
-        aes.Padding = PaddingMode.PKCS7;
-        aes.Key     = Encoding.UTF8.GetBytes(key);
-        aes.IV      = Encoding.UTF8.GetBytes(iv);
-        using var ms = new MemoryStream(Convert.FromBase64String(cipherText));
-        using var cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Read);
-        using var sr = new StreamReader(cs);
-        return sr.ReadToEnd();
+        int m = left.Length, n = right.Length;
+        // Build LCS table
+        var dp = new int[m + 1, n + 1];
+        for (int i = m - 1; i >= 0; i--)
+            for (int j = n - 1; j >= 0; j--)
+                dp[i, j] = left[i] == right[j]
+                    ? dp[i + 1, j + 1] + 1
+                    : Math.Max(dp[i + 1, j], dp[i, j + 1]);
+
+        var result = new List<Hunk>();
+        int ai = 0, bi = 0;
+        while (ai < m || bi < n)
+        {
+            if (ai < m && bi < n && left[ai] == right[bi])
+            {
+                result.Add(new Hunk("equal", left[ai++]));
+                bi++;
+            }
+            else if (bi < n && (ai >= m || dp[ai, bi + 1] >= dp[ai + 1, bi]))
+                result.Add(new Hunk("added", right[bi++]));
+            else
+                result.Add(new Hunk("removed", left[ai++]));
+        }
+        return result;
     }
 }
 

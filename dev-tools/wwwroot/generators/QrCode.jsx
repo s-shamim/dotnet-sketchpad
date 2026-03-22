@@ -17,13 +17,8 @@ function QrCodeTool() {
       <PageTitle sub="ecc level q · 10 px/module">qr code generator</PageTitle>
 
       <div className="mb-6">
-        <ColLabel>input</ColLabel>
-        <textarea
-          value={text} onChange={e => setText(e.target.value)}
-          placeholder="url, text, or any string..."
-          rows={3}
-          className="w-full border-b border-gray-200 py-2 text-gray-700 placeholder-gray-300 focus:outline-none focus:border-gray-400 text-sm font-mono resize-none leading-relaxed"
-        />
+        <ColLabel action={text && <ClearBtn onClear={() => setText('')} />}>input</ColLabel>
+        <TArea value={text} onChange={e => setText(e.target.value)} placeholder="url, text, or any string..." rows={3} />
       </div>
 
       <Btn onClick={run}>generate</Btn>

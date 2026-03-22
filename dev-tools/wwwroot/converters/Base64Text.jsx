@@ -19,7 +19,7 @@ function Base64Tool() {
       <TwoCol
         left={
           <div>
-            <ColLabel>input</ColLabel>
+            <ColLabel action={input && <ClearBtn onClear={() => setInput('')} />}>input</ColLabel>
             <TArea value={input} onChange={e => setInput(e.target.value)} placeholder="plain text or base64..." />
           </div>
         }

@@ -19,7 +19,7 @@ function UrlCodecTool() {
       <TwoCol
         left={
           <div>
-            <ColLabel>input</ColLabel>
+            <ColLabel action={input && <ClearBtn onClear={() => setInput('')} />}>input</ColLabel>
             <TArea value={input} onChange={e => setInput(e.target.value)} placeholder="paste text here..." />
           </div>
         }

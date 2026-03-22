@@ -36,7 +36,7 @@ function RegexValidatorTool() {
 
       {/* Test string */}
       <div className="mb-5">
-        <ColLabel>test string</ColLabel>
+        <ColLabel action={input && <ClearBtn onClear={() => setInput('')} />}>test string</ColLabel>
         <TArea value={input} onChange={e => setInput(e.target.value)} placeholder="paste test string here..." rows={5} />
       </div>
 

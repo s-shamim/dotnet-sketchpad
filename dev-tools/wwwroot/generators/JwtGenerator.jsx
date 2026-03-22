@@ -18,7 +18,7 @@ function JwtGeneratorTool() {
       <PageTitle sub="hs256 signed jwt">jwt generator</PageTitle>
 
       <div className="mb-5">
-        <ColLabel>payload (json)</ColLabel>
+        <ColLabel action={payload && <ClearBtn onClear={() => setPayload('')} />}>payload (json)</ColLabel>
         <TArea value={payload} onChange={e => setPayload(e.target.value)} rows={6} />
       </div>
 

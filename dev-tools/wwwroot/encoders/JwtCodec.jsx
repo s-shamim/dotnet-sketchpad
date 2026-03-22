@@ -47,13 +47,10 @@ function JwtCodecTool() {
 
       {mode === 'decode' && (
         <div>
-          <h2 className="text-xs tracking-widest text-gray-400 uppercase mb-3">token</h2>
-          <textarea
-            value={token} onChange={e => setToken(e.target.value)}
-            placeholder="paste jwt here..."
-            rows={3}
-            className="w-full border-b border-gray-200 py-2 text-gray-700 placeholder-gray-300 focus:outline-none focus:border-gray-400 text-sm font-mono resize-none leading-relaxed mb-4"
-          />
+          <div className="mb-4">
+            <ColLabel action={token && <ClearBtn onClear={() => setToken('')} />}>token</ColLabel>
+            <TArea value={token} onChange={e => setToken(e.target.value)} placeholder="paste jwt here..." rows={3} />
+          </div>
           <Btn onClick={decode}>decode</Btn>
 
           {header && (
@@ -79,7 +76,7 @@ function JwtCodecTool() {
       {mode === 'encode' && (
         <div>
           <div className="mb-5">
-            <h2 className="text-xs tracking-widest text-gray-400 uppercase mb-3">payload (json)</h2>
+            <ColLabel action={payload && <ClearBtn onClear={() => setPayload('')} />}>payload (json)</ColLabel>
             <TArea value={payload} onChange={e => setPayload(e.target.value)} placeholder='{"sub":"1234","name":"Alice","iat":1700000000}' rows={5} />
           </div>
           <div className="mb-5">

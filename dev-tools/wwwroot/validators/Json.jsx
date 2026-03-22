@@ -15,7 +15,7 @@ function JsonValidatorTool() {
       <PageTitle>json validator</PageTitle>
 
       <div className="mb-5">
-        <ColLabel>input</ColLabel>
+        <ColLabel action={input && <ClearBtn onClear={() => setInput('')} />}>input</ColLabel>
         <TArea value={input} onChange={e => setInput(e.target.value)} placeholder="paste json here..." rows={10} />
       </div>
 

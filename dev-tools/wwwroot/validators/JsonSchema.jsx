@@ -18,7 +18,7 @@ function JsonSchemaValidatorTool() {
       <TwoCol
         left={
           <div>
-            <ColLabel>json schema</ColLabel>
+            <ColLabel action={schema && <ClearBtn onClear={() => setSchema('')} />}>json schema</ColLabel>
             <TArea
               value={schema}
               onChange={e => setSchema(e.target.value)}
@@ -29,7 +29,7 @@ function JsonSchemaValidatorTool() {
         }
         right={
           <div>
-            <ColLabel>json document</ColLabel>
+            <ColLabel action={json && <ClearBtn onClear={() => setJson('')} />}>json document</ColLabel>
             <TArea
               value={json}
               onChange={e => setJson(e.target.value)}

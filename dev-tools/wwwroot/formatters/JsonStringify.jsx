@@ -32,7 +32,7 @@ function JsonStringifyTool() {
       <TwoCol
         left={
           <div>
-            <ColLabel>{mode === 'stringify' ? 'json object' : 'string literal'}</ColLabel>
+            <ColLabel action={input && <ClearBtn onClear={() => setInput('')} />}>{mode === 'stringify' ? 'json object' : 'string literal'}</ColLabel>
             <TArea
               value={input}
               onChange={e => setInput(e.target.value)}

@@ -13,14 +13,15 @@ function HashTool() {
     } catch { setError('Connection failed.'); }
   }
 
-  const algorithms = ['md5', 'sha1', 'sha256', 'sha512'];
+  const algorithms = ['md5', 'sha1', 'sha256', 'sha512', 'bcrypt'];
+  const isBcrypt = algorithm === 'bcrypt';
 
   return (
     <div>
-      <PageTitle sub="md5 · sha1 · sha256 · sha512">hash generator</PageTitle>
+      <PageTitle sub="md5 · sha1 · sha256 · sha512 · bcrypt">hash generator</PageTitle>
 
       <div className="mb-5">
-        <ColLabel>input</ColLabel>
+        <ColLabel action={input && <ClearBtn onClear={() => setInput('')} />}>input</ColLabel>
         <TArea value={input} onChange={e => setInput(e.target.value)} placeholder="paste text to hash..." rows={5} />
       </div>
 
@@ -37,6 +38,10 @@ function HashTool() {
           ))}
         </div>
       </div>
+
+      {isBcrypt && (
+        <p className="text-xs text-gray-400 mb-5">bcrypt is one-way — the output cannot be reversed. each run produces a unique hash.</p>
+      )}
 
       <Btn onClick={run}>hash</Btn>
 

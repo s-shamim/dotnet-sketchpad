@@ -72,6 +72,14 @@ function CopyBtn({ text }) {
   );
 }
 
+function ClearBtn({ onClear }) {
+  return (
+    <button onClick={onClear} className="text-xs text-gray-400 hover:text-gray-700 transition-colors lowercase">
+      clear
+    </button>
+  );
+}
+
 function ColLabel({ children, action }) {
   return (
     <div className="flex items-center justify-between mb-3">
@@ -98,12 +106,6 @@ function PageTitle({ children, sub }) {
 // ── Nav config ────────────────────────────────────────────
 
 const TOOLS = [
-  {
-    category: 'crypto',
-    tools: [
-      { id: 'aes', label: 'aes', component: AesTool },
-    ],
-  },
   {
     category: 'converters',
     tools: [
@@ -132,6 +134,7 @@ const TOOLS = [
       { id: 'fmt-csv',       label: 'csv',               component: CsvFormatterTool   },
       { id: 'fmt-sql',       label: 'sql',               component: SqlFormatterTool   },
       { id: 'json-stringify',label: 'json stringify',    component: JsonStringifyTool  },
+      { id: 'fmt-diff',      label: 'diff checker',      component: DiffTool           },
     ],
   },
   {
@@ -142,18 +145,26 @@ const TOOLS = [
       { id: 'vld-regex',       label: 'regex',       component: RegexValidatorTool      },
       { id: 'vld-json-schema', label: 'json schema', component: JsonSchemaValidatorTool },
       { id: 'vld-ip',          label: 'ip address',  component: IpValidatorTool         },
+      { id: 'vld-cron',        label: 'cron',        component: CronValidatorTool       },
     ],
   },
   {
     category: 'generators',
     tools: [
-      { id: 'lorem',     label: 'lorem ipsum',   component: LoremIpsumTool    },
-      { id: 'password',  label: 'password',      component: PasswordTool      },
-      { id: 'uuid',      label: 'uuid',          component: UuidTool          },
-      { id: 'qrcode',    label: 'qr code',       component: QrCodeTool        },
-      { id: 'hash',      label: 'hash',          component: HashTool          },
-      { id: 'fake-data', label: 'fake data',     component: FakeDataTool      },
-      { id: 'jwt-gen',   label: 'jwt generator', component: JwtGeneratorTool  },
+      { id: 'lorem',       label: 'lorem ipsum',     component: LoremIpsumTool      },
+      { id: 'password',    label: 'password',        component: PasswordTool        },
+      { id: 'uuid',        label: 'uuid',            component: UuidTool            },
+      { id: 'qrcode',      label: 'qr code',         component: QrCodeTool          },
+      { id: 'hash',        label: 'hash',            component: HashTool            },
+      { id: 'fake-data',   label: 'fake data',       component: FakeDataTool        },
+      { id: 'jwt-gen',     label: 'jwt generator',   component: JwtGeneratorTool    },
+      { id: 'json-schema-gen', label: 'json schema', component: JsonSchemaGenTool   },
+    ],
+  },
+  {
+    category: 'cryptography',
+    tools: [
+      { id: 'aes', label: 'aes', component: AesTool },
     ],
   },
   {
@@ -171,7 +182,7 @@ const TOOLS = [
 // ── App shell ────────────────────────────────────────────
 
 function App() {
-  const [active, setActive] = React.useState('aes');
+  const [active, setActive] = React.useState('json-yaml');
   const allTools = TOOLS.flatMap(c => c.tools);
   const tool = allTools.find(t => t.id === active);
 

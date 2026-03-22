@@ -15,7 +15,7 @@ function XmlValidatorTool() {
       <PageTitle>xml validator</PageTitle>
 
       <div className="mb-5">
-        <ColLabel>input</ColLabel>
+        <ColLabel action={input && <ClearBtn onClear={() => setInput('')} />}>input</ColLabel>
         <TArea value={input} onChange={e => setInput(e.target.value)} placeholder="paste xml here..." rows={10} />
       </div>
 
