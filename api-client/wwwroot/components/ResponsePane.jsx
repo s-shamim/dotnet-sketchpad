@@ -3,6 +3,7 @@
 window.ResponsePane = function ResponsePane({ response, loading }) {
   const [tab, setTab] = React.useState('body');
   const [bodyView, setBodyView] = React.useState('pretty');
+  const [copied, setCopied] = React.useState(false);
 
   const statusColor = !response ? 'text-gray-300'
     : response.status < 300 ? 'text-gray-700'
@@ -48,7 +49,7 @@ window.ResponsePane = function ResponsePane({ response, loading }) {
         <div className="flex flex-col flex-1 overflow-hidden p-3 bg-white">
           <div className="flex justify-between items-center mb-2 flex-shrink-0">
             <p className="text-[9px] tracking-widest text-gray-300">response body</p>
-            <div className="flex gap-3">
+            <div className="flex items-center gap-3">
               {['pretty','raw'].map(v => (
                 <button
                   key={v}
@@ -59,6 +60,20 @@ window.ResponsePane = function ResponsePane({ response, loading }) {
                   {v}
                 </button>
               ))}
+              {response && (
+                <button
+                  onClick={() => {
+                    const text = bodyView === 'pretty' ? formatBody(response.body) : response.body;
+                    navigator.clipboard.writeText(text);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1500);
+                  }}
+                  className="text-[10px] text-gray-400 hover:text-gray-700 bg-transparent border-0 cursor-pointer tracking-wide transition-colors border-l border-gray-200 pl-3"
+                  style={{ fontFamily: 'Geist, sans-serif' }}
+                >
+                  {copied ? 'copied!' : 'copy'}
+                </button>
+              )}
             </div>
           </div>
           {response ? (

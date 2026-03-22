@@ -5,14 +5,13 @@ window.BottomBar = function BottomBar({ logs, layout, onToggleLayout, sidebarOpe
     <div className="border-t border-gray-200 flex-shrink-0 bg-gray-50">
       {/* Header row */}
       <div className="flex items-center px-4 py-[5px] gap-3">
-        <button
-          onClick={onToggleConsole}
-          className="flex items-center gap-[5px] text-[10px] tracking-wider text-gray-500 hover:text-gray-900 bg-transparent border-0 cursor-pointer transition-colors"
+        <span
+          className="flex items-center gap-[5px] text-[10px] tracking-wider text-gray-400"
           style={{ fontFamily: 'Geist, sans-serif' }}
         >
           console
           <span style={{ fontSize: 7, display: 'inline-block', transition: 'transform 0.2s', transform: consoleOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▲</span>
-        </button>
+        </span>
 
         {/* Right side buttons */}
         <div className="ml-auto flex items-center border-l border-gray-200">

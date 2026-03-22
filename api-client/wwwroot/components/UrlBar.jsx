@@ -1,6 +1,6 @@
 // UrlBar.jsx
 // Top bar: HTTP method selector, URL input, environment selector, send button
-window.UrlBar = function UrlBar({ method, onMethodChange, url, onUrlChange, environment, environments, onEnvChange, onSend, loading }) {
+window.UrlBar = function UrlBar({ method, onMethodChange, url, onUrlChange, environment, environments, onEnvChange, onSend, onSave, loading }) {
   return (
     <div className="flex items-center gap-3 px-4 py-2 border-b border-gray-200 bg-white flex-shrink-0">
       {/* Method */}
@@ -27,15 +27,25 @@ window.UrlBar = function UrlBar({ method, onMethodChange, url, onUrlChange, envi
 
       {/* Environment */}
       <select
-        value={environment}
+        value={environment || ''}
         onChange={e => onEnvChange(e.target.value)}
         className="border-b border-gray-400 pb-1 text-xs text-gray-500 bg-transparent outline-none cursor-pointer"
         style={{ fontFamily: 'Geist, sans-serif' }}
       >
+        {environments.length === 0 && <option value="" disabled>no environment</option>}
         {environments.map(env => (
           <option key={env.id} value={env.id}>{env.name}</option>
         ))}
       </select>
+
+      {/* Save */}
+      <button
+        onClick={onSave}
+        className="text-xs text-gray-400 hover:text-gray-900 bg-transparent border-0 cursor-pointer tracking-wide transition-colors"
+        style={{ fontFamily: 'Geist, sans-serif' }}
+      >
+        save
+      </button>
 
       {/* Send */}
       <button

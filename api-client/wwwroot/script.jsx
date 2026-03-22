@@ -1,6 +1,76 @@
 // script.jsx
 // Root app component — wires all panels together, manages global state
 
+// Replaces {{key}} patterns with values from the active environment's variables
+function interpolate(str, vars) {
+  if (!str || !vars?.length) return str;
+  return str.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+    const v = vars.find(v => v.key === key);
+    return v ? (v.currentValue || v.initialValue || match) : match;
+  });
+}
+
+// Modal for saving the current request into a collection
+function SaveModal({ open, collections, onClose, onSave }) {
+  const [colId, setColId] = React.useState('');
+  const [name, setName] = React.useState('');
+
+  React.useEffect(() => {
+    if (open) {
+      setColId(collections[0]?.id || '');
+      setName('');
+    }
+  }, [open]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.18)' }}>
+      <div className="bg-white border border-gray-200 flex flex-col" style={{ width: 340 }}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+          <span className="text-[12px] font-medium text-gray-900 tracking-wide" style={{ fontFamily: 'Geist, sans-serif' }}>save to collection</span>
+          <button onClick={onClose} className="text-[11px] text-gray-400 hover:text-gray-900 bg-transparent border-0 cursor-pointer transition-colors" style={{ fontFamily: 'Geist, sans-serif' }}>✕ close</button>
+        </div>
+        <div className="px-4 py-4 flex flex-col gap-4">
+          <div>
+            <p className="text-[9px] tracking-widest text-gray-300 mb-2">collection</p>
+            {collections.length === 0 ? (
+              <p className="text-[11px] text-gray-400">no collections yet. create one first.</p>
+            ) : (
+              <select
+                value={colId}
+                onChange={e => setColId(e.target.value)}
+                className="border-b border-gray-400 pb-1 text-[11px] text-gray-900 bg-transparent outline-none w-full cursor-pointer"
+                style={{ fontFamily: 'Geist, sans-serif' }}
+              >
+                {collections.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            )}
+          </div>
+          <div>
+            <p className="text-[9px] tracking-widest text-gray-300 mb-2">request name</p>
+            <input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="my request"
+              className="border-b border-gray-400 focus:border-gray-900 pb-1 text-[11px] text-gray-900 bg-transparent outline-none w-full placeholder-gray-300 font-mono-geist"
+            />
+          </div>
+        </div>
+        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
+          <button onClick={onClose} className="text-[11px] text-gray-400 hover:text-gray-900 bg-transparent border-0 cursor-pointer transition-colors" style={{ fontFamily: 'Geist, sans-serif' }}>cancel</button>
+          <button
+            onClick={() => onSave(colId, name)}
+            disabled={!colId || !name.trim()}
+            className="text-[11px] font-medium text-gray-900 bg-transparent border-0 send-emphasis cursor-pointer pb-[2px] tracking-wide hover:opacity-50 transition-opacity disabled:opacity-30"
+            style={{ fontFamily: 'Geist, sans-serif' }}
+          >save</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   // Request state
   const [method, setMethod] = React.useState('GET');
@@ -29,6 +99,7 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
   const [consoleOpen, setConsoleOpen] = React.useState(true);
   const [envModalOpen, setEnvModalOpen] = React.useState(false);
+  const [saveOpen, setSaveOpen] = React.useState(false);
 
   // Drag resize
   const [reqSize, setReqSize] = React.useState(null); // px or null (flex:1)
@@ -80,13 +151,25 @@ function App() {
     setResponse(null);
     const start = Date.now();
 
-    // Build query string from enabled params
-    const qs = params.filter(p => p.enabled && p.key).map(p => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`).join('&');
-    const fullUrl = qs ? `${url}${url.includes('?') ? '&' : '?'}${qs}` : url;
+    // Resolve environment variables in url, headers, and body
+    const activeEnv = environments.find(e => e.id === activeEnvId);
+    const activeVars = activeEnv?.variables || [];
 
-    // Build headers
+    // Build query string from enabled params
+    const resolvedUrl = interpolate(url, activeVars);
+    const qs = params.filter(p => p.enabled && p.key).map(p => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`).join('&');
+    const fullUrl = qs ? `${resolvedUrl}${resolvedUrl.includes('?') ? '&' : '?'}${qs}` : resolvedUrl;
+
+    // Build headers — inject auth first so the headers table can override
     const reqHeaders = {};
-    headers.filter(h => h.enabled && h.key).forEach(h => { reqHeaders[h.key] = h.value; });
+    if (auth.type === 'bearer token' && auth.token) {
+      reqHeaders['Authorization'] = `Bearer ${interpolate(auth.token, activeVars)}`;
+    } else if (auth.type === 'basic auth' && auth.username) {
+      reqHeaders['Authorization'] = 'Basic ' + btoa(`${auth.username || ''}:${auth.password || ''}`);
+    } else if (auth.type === 'api key' && auth.apiKeyName) {
+      reqHeaders[auth.apiKeyName] = interpolate(auth.apiKeyValue || '', activeVars);
+    }
+    headers.filter(h => h.enabled && h.key).forEach(h => { reqHeaders[h.key] = interpolate(h.value, activeVars); });
 
     try {
       const proxyRes = await fetch('/api/proxy', {
@@ -96,7 +179,7 @@ function App() {
           method,
           url: fullUrl,
           headers: reqHeaders,
-          body: ['GET', 'HEAD'].includes(method) ? null : body || null,
+          body: ['GET', 'HEAD'].includes(method) ? null : interpolate(body, activeVars) || null,
           timeoutMs: 30000,
         }),
       });
@@ -143,6 +226,23 @@ function App() {
         setCollections(prev => [...prev, col]);
       }
     } catch { /* ignore */ }
+  }
+
+  async function handleSave(colId, name) {
+    try {
+      const res = await fetch(`/api/collections/${colId}/requests`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, method, url, params, headers, body, bodyType, auth }),
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        setCollections(prev => prev.map(c =>
+          c.id !== colId ? c : { ...c, requests: [...(c.requests || []), saved] }
+        ));
+      }
+    } catch { /* ignore */ }
+    setSaveOpen(false);
   }
 
   function handleSelectRequest(req) {
@@ -206,6 +306,7 @@ function App() {
         environments={environments}
         onEnvChange={setActiveEnvId}
         onSend={handleSend}
+        onSave={() => setSaveOpen(true)}
         loading={loading}
       />
 
@@ -315,6 +416,12 @@ function App() {
           setEnvironments(results);
           setEnvModalOpen(false);
         }}
+      />
+      <SaveModal
+        open={saveOpen}
+        collections={collections}
+        onClose={() => setSaveOpen(false)}
+        onSave={handleSave}
       />
     </div>
   );

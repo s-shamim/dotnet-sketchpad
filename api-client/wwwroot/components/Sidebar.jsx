@@ -92,6 +92,7 @@ window.Sidebar = function Sidebar({ open, collections, history, environments, ac
             >
               <div className="flex items-center gap-2 mb-[2px]">
                 <span className="text-[9px] text-gray-400 font-mono-geist">{item.method}</span>
+                <span className={`text-[9px] font-mono-geist ${!item.status || item.status >= 400 ? 'text-red-400' : item.status >= 300 ? 'text-yellow-600' : 'text-gray-700'}`}>{item.status || '—'}</span>
                 <span className="text-[9px] text-gray-300" style={{ fontFamily: 'Geist, sans-serif' }}>{item.time}</span>
               </div>
               <div className="text-[10px] text-gray-400 truncate font-mono-geist">{item.url}</div>
