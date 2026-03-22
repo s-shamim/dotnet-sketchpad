@@ -32,6 +32,20 @@ var crypto = app.MapGroup("/api/crypto");
 
 crypto.MapPost("/aes-encrypt", (AesReq r) => R.Try(() =>
 {
+    // Key/IV mode
+    if (!string.IsNullOrEmpty(r.Key) && !string.IsNullOrEmpty(r.Iv))
+    {
+        var keyBytes = Encoding.UTF8.GetBytes(r.Key);
+        var ivBytes  = Encoding.UTF8.GetBytes(r.Iv);
+        using var aesRaw = Aes.Create();
+        aesRaw.Mode = CipherMode.CBC; aesRaw.Padding = PaddingMode.PKCS7;
+        aesRaw.Key = keyBytes; aesRaw.IV = ivBytes;
+        using var msRaw = new MemoryStream();
+        using (var cs = new CryptoStream(msRaw, aesRaw.CreateEncryptor(), CryptoStreamMode.Write))
+        using (var sw = new StreamWriter(cs)) sw.Write(r.Text);
+        return new { result = Convert.ToBase64String(msRaw.ToArray()) };
+    }
+    // Password / PBKDF2 mode
     if (string.IsNullOrEmpty(r.Password)) throw new Exception("Password is required.");
     var salt = RandomNumberGenerator.GetBytes(16);
     var iv   = RandomNumberGenerator.GetBytes(16);
@@ -55,6 +69,21 @@ crypto.MapPost("/aes-encrypt", (AesReq r) => R.Try(() =>
 
 crypto.MapPost("/aes-decrypt", (AesReq r) => R.Try(() =>
 {
+    // Key/IV mode
+    if (!string.IsNullOrEmpty(r.Key) && !string.IsNullOrEmpty(r.Iv))
+    {
+        var keyBytes    = Encoding.UTF8.GetBytes(r.Key);
+        var ivBytes     = Encoding.UTF8.GetBytes(r.Iv);
+        var cipherBytes = Convert.FromBase64String(r.Text.Trim());
+        using var aesRaw = Aes.Create();
+        aesRaw.Mode = CipherMode.CBC; aesRaw.Padding = PaddingMode.PKCS7;
+        aesRaw.Key = keyBytes; aesRaw.IV = ivBytes;
+        using var msRaw = new MemoryStream(cipherBytes);
+        using var cs = new CryptoStream(msRaw, aesRaw.CreateDecryptor(), CryptoStreamMode.Read);
+        using var sr = new StreamReader(cs);
+        return new { result = sr.ReadToEnd() };
+    }
+    // Password / PBKDF2 mode
     if (string.IsNullOrEmpty(r.Password)) throw new Exception("Password is required.");
     var combined = Convert.FromBase64String(r.Text.Trim());
     if (combined.Length < 33) throw new Exception("Ciphertext too short — was it encrypted with this tool?");
@@ -68,9 +97,9 @@ crypto.MapPost("/aes-decrypt", (AesReq r) => R.Try(() =>
     aes.Key     = key;
     aes.IV      = iv;
     using var ms = new MemoryStream(cipher);
-    using var cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Read);
-    using var sr = new StreamReader(cs);
-    return new { result = sr.ReadToEnd() };
+    using var cs2 = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Read);
+    using var sr2 = new StreamReader(cs2);
+    return new { result = sr2.ReadToEnd() };
 }));
 
 // ── Converters (7) ────────────────────────────────────────
@@ -434,7 +463,7 @@ app.Run();
 record TextReq(string Text);
 record UnixReq(long Unix);
 record NumberBaseReq(string Value, string From);
-record AesReq(string Text, string Password);
+record AesReq(string Text, string? Password = null, string? Key = null, string? Iv = null);
 record JwtEncReq(string Payload, string Secret);
 record DiffReq(string? Left, string? Right);
 record RegexReq(string Pattern, string Input, string Flags);
