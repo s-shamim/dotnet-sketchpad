@@ -1,5 +1,22 @@
 const { useState } = React;
 
+function Icon({ name, size = 14, className = "text-gray-400" }) {
+  return (
+    <i
+      className={`ph-light ph-${name} ${className}`}
+      style={{ fontSize: size }}
+    />
+  );
+}
+
+const CONDITION_ICON = {
+  'sunny':         'sun',
+  'clear':         'sun',
+  'cloudy':        'cloud',
+  'rainy':         'cloud-rain',
+  'partly cloudy': 'cloud-sun',
+};
+
 const CITIES = {
   'san francisco': { temp: 18, condition: 'cloudy',        humidity: 65, wind: 12 },
   'new york':      { temp: 22, condition: 'sunny',         humidity: 55, wind: 8  },
@@ -48,7 +65,10 @@ function WeatherDashboard() {
               <div className="text-6xl font-light text-gray-700 tabular-nums mb-1">
                 {display(current.temp)}°{unit}
               </div>
-              <div className="text-sm text-gray-400 lowercase">{current.condition}</div>
+              <div className="flex items-center gap-1.5 text-sm text-gray-400 lowercase">
+                <Icon name={CONDITION_ICON[current.condition] ?? 'cloud'} size={16} />
+                {current.condition}
+              </div>
             </div>
             <div className="flex gap-3">
               {['C', 'F'].map(u => (
@@ -65,15 +85,24 @@ function WeatherDashboard() {
 
           <ul className="divide-y divide-gray-100">
             <li className="flex justify-between py-3">
-              <span className="text-xs tracking-widest text-gray-400 uppercase">humidity</span>
+              <span className="flex items-center gap-1.5 text-xs tracking-widest text-gray-400 uppercase">
+                <Icon name="drop" size={12} />
+                humidity
+              </span>
               <span className="text-sm text-gray-700">{current.humidity}%</span>
             </li>
             <li className="flex justify-between py-3">
-              <span className="text-xs tracking-widest text-gray-400 uppercase">wind</span>
+              <span className="flex items-center gap-1.5 text-xs tracking-widest text-gray-400 uppercase">
+                <Icon name="wind" size={12} />
+                wind
+              </span>
               <span className="text-sm text-gray-700">{current.wind} km/h</span>
             </li>
             <li className="flex justify-between py-3">
-              <span className="text-xs tracking-widest text-gray-400 uppercase">feels like</span>
+              <span className="flex items-center gap-1.5 text-xs tracking-widest text-gray-400 uppercase">
+                <Icon name="thermometer" size={12} />
+                feels like
+              </span>
               <span className="text-sm text-gray-700">{display(current.temp - 2)}°{unit}</span>
             </li>
           </ul>
@@ -98,4 +127,4 @@ function WeatherDashboard() {
   );
 }
 
-ReactDOM.render(<WeatherDashboard />, document.getElementById('root'));
+ReactDOM.createRoot(document.getElementById('root')).render(<WeatherDashboard />);
