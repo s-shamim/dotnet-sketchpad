@@ -14,6 +14,11 @@ obj/
 # User secrets
 secrets.json
 
+# OIDC / IDS developer signing keys
+tempkey.jwk
+**/tempkey.jwk
+**/keys/is-signing-key-*.json
+
 # Environment-specific settings (may contain local secrets)
 **/appsettings.Development.json
 
