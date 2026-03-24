@@ -1,5 +1,14 @@
 const { useState } = React;
 
+function Icon({ name, size = 14, className = "text-gray-400" }) {
+  return (
+    <i
+      className={`ph-light ph-${name} ${className}`}
+      style={{ fontSize: size }}
+    />
+  );
+}
+
 const PRODUCTS = [
   { id: 1, name: 'laptop',     price: 999.99, emoji: '💻', description: 'powerful computing'    },
   { id: 2, name: 'headphones', price: 199.99, emoji: '🎧', description: 'crystal clear audio'   },
@@ -50,9 +59,10 @@ function ShoppingApp() {
                   <span className="text-xs text-gray-400">${p.price.toFixed(2)}</span>
                   <button
                     onClick={() => addToCart(p)}
-                    className="text-gray-300 hover:text-gray-700 text-xs opacity-0 group-hover:opacity-100 transition-all ml-1"
+                    className="opacity-0 group-hover:opacity-100 transition-all ml-1 text-gray-300 hover:text-gray-700"
+                    title="add to cart"
                   >
-                    + add
+                    <Icon name="shopping-cart-simple" size={14} />
                   </button>
                 </li>
               ))}
@@ -74,14 +84,17 @@ function ShoppingApp() {
                         <span className="text-xs text-gray-700 lowercase">{item.name}</span>
                         <button
                           onClick={() => remove(item.id)}
-                          className="text-gray-200 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 transition-all"
-                        >✕</button>
+                          className="opacity-0 group-hover:opacity-100 transition-all text-gray-300 hover:text-red-400"
+                          title="remove"
+                        >
+                          <Icon name="x" size={12} />
+                        </button>
                       </div>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1">
-                          <button onClick={() => updateQty(item.id, item.quantity - 1)} className="text-gray-300 hover:text-gray-600 text-xs w-4">−</button>
+                          <button onClick={() => updateQty(item.id, item.quantity - 1)} className="text-gray-300 hover:text-gray-600 w-4 flex items-center justify-center"><Icon name="minus" size={12} /></button>
                           <span className="text-xs text-gray-400 w-4 text-center tabular-nums">{item.quantity}</span>
-                          <button onClick={() => updateQty(item.id, item.quantity + 1)} className="text-gray-300 hover:text-gray-600 text-xs w-4">+</button>
+                          <button onClick={() => updateQty(item.id, item.quantity + 1)} className="text-gray-300 hover:text-gray-600 w-4 flex items-center justify-center"><Icon name="plus" size={12} /></button>
                         </div>
                         <span className="text-xs text-gray-400 font-mono">${(item.price * item.quantity).toFixed(2)}</span>
                       </div>
@@ -106,4 +119,4 @@ function ShoppingApp() {
   );
 }
 
-ReactDOM.render(<ShoppingApp />, document.getElementById('root'));
+ReactDOM.createRoot(document.getElementById('root')).render(<ShoppingApp />);

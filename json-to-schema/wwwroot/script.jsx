@@ -1,5 +1,18 @@
 const { useState, useEffect, useRef, useCallback } = React;
 
+function Icon({ name, size = 14, className = 'text-gray-400' }) {
+  return <i className={`ph-light ph-${name} ${className}`} style={{ fontSize: size }} />;
+}
+
+function Spinner({ size = 16 }) {
+  return (
+    <span
+      style={{ width: size, height: size }}
+      className="inline-block border-2 border-gray-200 border-t-gray-500 rounded-full animate-spin"
+    />
+  );
+}
+
 const PLACEHOLDER = `{
   "name": "Alice",
   "age": 30,
@@ -83,24 +96,26 @@ function App() {
             </span>
             <div className="flex items-center gap-4">
               {error && (
-                <span className="text-xs text-red-400 truncate max-w-xs">{error}</span>
+                <span className="text-xs text-red-500 truncate max-w-xs lowercase">{error}</span>
               )}
               {isValid && (
-                <span className="text-xs text-gray-300">valid</span>
+                <Icon name="check-circle" size={13} className="text-green-600" />
               )}
               {!isEmpty && !error && (
                 <button
                   onClick={format}
-                  className="text-xs text-gray-400 hover:text-gray-700 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition-colors lowercase"
                 >
+                  <Icon name="brackets-curly" size={12} />
                   format
                 </button>
               )}
               {!isEmpty && (
                 <button
                   onClick={clear}
-                  className="text-xs text-gray-300 hover:text-red-400 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-gray-300 hover:text-red-400 transition-colors lowercase"
                 >
+                  <Icon name="x" size={12} />
                   clear
                 </button>
               )}
@@ -110,8 +125,8 @@ function App() {
             value={input}
             onChange={e => setInput(e.target.value)}
             placeholder={PLACEHOLDER}
-            className={`flex-1 min-h-0 w-full font-mono text-sm text-gray-700 bg-gray-50 p-4 resize-none focus:outline-none border transition-colors ${
-              error ? 'border-red-200 focus:border-red-300' : 'border-gray-100 focus:border-gray-300'
+            className={`flex-1 min-h-0 w-full font-mono text-sm text-gray-700 py-2 resize-none focus:outline-none bg-white leading-relaxed border-b ${
+              error ? 'border-red-400 focus:border-red-500' : 'border-gray-200 focus:border-gray-400'
             }`}
             spellCheck={false}
           />
@@ -123,25 +138,24 @@ function App() {
             <span className="text-xs tracking-widest text-gray-400 uppercase">
               json schema
             </span>
-            {schema && (
-              <button
-                onClick={copy}
-                className="text-xs text-gray-400 hover:text-gray-700 transition-colors"
-              >
-                {copied ? 'copied ✓' : 'copy'}
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              {loading && <Spinner size={13} />}
+              {schema && (
+                <button
+                  onClick={copy}
+                  className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition-colors lowercase"
+                >
+                  <Icon name={copied ? 'check' : 'clipboard'} size={12} className={copied ? 'text-green-600' : 'text-gray-400'} />
+                  {copied ? 'copied' : 'copy'}
+                </button>
+              )}
+            </div>
           </div>
           <textarea
             value={schema}
             readOnly
-            placeholder={
-              isEmpty   ? 'paste json on the left...' :
-              loading   ? 'converting...' :
-              error     ? '' :
-                          ''
-            }
-            className="flex-1 min-h-0 w-full font-mono text-sm text-gray-500 bg-gray-50 p-4 resize-none focus:outline-none border border-gray-100 placeholder-gray-300"
+            placeholder={isEmpty ? 'paste json on the left...' : ''}
+            className="flex-1 min-h-0 w-full font-mono text-sm text-gray-600 py-2 resize-none focus:outline-none bg-white leading-relaxed border-b border-gray-200 cursor-default placeholder-gray-300"
             spellCheck={false}
           />
         </div>
@@ -151,4 +165,4 @@ function App() {
   );
 }
 
-ReactDOM.render(<App />, document.getElementById('root'));
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);

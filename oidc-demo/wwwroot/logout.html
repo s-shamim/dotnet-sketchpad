@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>signing out — oidc demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white min-h-screen flex items-center justify-center">
+  <div class="w-full max-w-sm px-8 py-12">
+    <p class="text-xs tracking-widest text-gray-400 uppercase mb-6">oidc demo</p>
+    <p id="status" class="text-sm text-gray-500 lowercase">signing out...</p>
+    <p id="error" class="text-xs text-red-400 lowercase mt-2 hidden"></p>
+  </div>
+
+  <script>
+    (async function () {
+      const params    = new URLSearchParams(window.location.search);
+      const logoutId  = params.get('logoutId') || '';
+      const statusEl  = document.getElementById('status');
+      const errorEl   = document.getElementById('error');
+
+      try {
+        const url = '/api/ids/logout' + (logoutId ? '?logoutId=' + encodeURIComponent(logoutId) : '');
+        const res  = await fetch(url);
+        const data = await res.json();
+        statusEl.textContent = 'signed out.';
+        window.location.href = data.redirectUrl || '/';
+      } catch (e) {
+        statusEl.textContent = 'sign out failed.';
+        errorEl.textContent  = 'could not complete sign out. redirecting home...';
+        errorEl.classList.remove('hidden');
+        setTimeout(() => { window.location.href = '/'; }, 2000);
+      }
+    })();
+  </script>
+</body>
+</html>

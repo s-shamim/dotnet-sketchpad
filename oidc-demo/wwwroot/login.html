@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sign in — oidc demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/light/style.css" />
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-white">
+  <div id="root"></div>
+  <script type="text/babel">
+    function LoginPage() {
+      // window.location.search is the raw query string, e.g.:
+      //   ?ReturnUrl=%2Fconnect%2Fauthorize%2Fcallback%3Frequest_uri%3D...
+      // URLSearchParams.get() decodes the VALUE once, giving us the decoded
+      // returnUrl which is what IDS's GetAuthorizationContextAsync expects.
+      const params    = new URLSearchParams(window.location.search);
+      const returnUrl = params.get('ReturnUrl') || params.get('returnUrl') || '/';
+
+      const [username,   setUsername]   = React.useState('');
+      const [password,   setPassword]   = React.useState('');
+      const [rememberMe, setRememberMe] = React.useState(false);
+      const [error,      setError]      = React.useState(null);
+      const [loading,    setLoading]    = React.useState(false);
+      const [context,    setContext]    = React.useState(null);
+
+      React.useEffect(() => {
+        // encodeURIComponent the decoded returnUrl so it travels correctly
+        // as a query param to our API, which then passes it to IDS unchanged.
+        fetch(`/api/ids/login?returnUrl=${encodeURIComponent(returnUrl)}`)
+          .then(r => r.json())
+          .then(d => {
+            setContext(d);
+            if (d.loginHint) setUsername(d.loginHint);
+          })
+          .catch(() => {});
+      }, []);
+
+      const submit = async (e) => {
+        e.preventDefault();
+        setError(null);
+        setLoading(true);
+        try {
+          const res = await fetch('/api/ids/login', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            // returnUrl is the decoded value from URLSearchParams — correct form
+            // for JSON body; server passes it straight to GetAuthorizationContextAsync
+            body:    JSON.stringify({ username, password, rememberMe, returnUrl }),
+          });
+          const data = await res.json();
+          if (!res.ok) { setError(data.error ?? data.title ?? 'sign in failed. try again.'); return; }
+          if (!data.contextFound) { setError('authorization session expired. refresh and try again.'); return; }
+          window.location.href = data.redirectUrl;
+        } catch {
+          setError('something went wrong. try again.');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="w-full max-w-sm px-8 py-12">
+            <p className="text-xs tracking-widest text-gray-400 uppercase mb-1">oidc demo</p>
+            {context?.clientName && (
+              <p className="text-xs text-gray-400 lowercase mb-6">
+                sign in to access{' '}
+                <span className="text-gray-600">{context.clientName}</span>
+              </p>
+            )}
+
+            <h1 className="text-sm text-gray-700 lowercase mb-6">sign in</h1>
+
+            {error && (
+              <p className="text-xs text-red-500 mb-4 lowercase">{error}</p>
+            )}
+
+            <form onSubmit={submit} className="flex flex-col gap-6">
+              <input
+                type="text"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                placeholder="username"
+                autoComplete="username"
+                className="border-b border-gray-300 py-2 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:border-gray-500 bg-transparent"
+              />
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="password"
+                autoComplete="current-password"
+                className="border-b border-gray-300 py-2 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:border-gray-500 bg-transparent"
+              />
+
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={e => setRememberMe(e.target.checked)}
+                  className="accent-gray-500 w-3.5 h-3.5 cursor-pointer"
+                />
+                <span className="text-sm text-gray-500 lowercase">remember me</span>
+              </label>
+
+              <button
+                type="submit"
+                disabled={loading || !username || !password}
+                className="text-left text-sm text-gray-600 hover:text-gray-900 transition-colors lowercase disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                {loading ? 'signing in...' : 'sign in →'}
+              </button>
+
+              <p className="text-xs text-gray-400 lowercase">
+                test accounts: alice / alice &nbsp;·&nbsp; bob / bob
+              </p>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<LoginPage />);
+  </script>
+</body>
+</html>
