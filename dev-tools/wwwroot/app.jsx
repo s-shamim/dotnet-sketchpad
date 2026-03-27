@@ -24,6 +24,12 @@ function randomStr(length) {
 
 // ── Shared UI primitives ──────────────────────────────────
 
+function Icon({ name, size = 14, className = "text-gray-400" }) {
+  return (
+    <i className={`ph-light ph-${name} ${className}`} style={{ fontSize: size }} />
+  );
+}
+
 function Btn({ children, onClick, disabled }) {
   return (
     <button
@@ -225,4 +231,4 @@ function App() {
   );
 }
 
-ReactDOM.render(<App />, document.getElementById('root'));
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);

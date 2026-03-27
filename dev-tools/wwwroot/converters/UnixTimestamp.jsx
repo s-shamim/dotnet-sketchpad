@@ -34,7 +34,7 @@ function UnixTimestampTool() {
 
       {/* Unix → DateTime */}
       <div className="mb-8">
-        <h2 className="text-xs tracking-widest text-gray-400 uppercase mb-4">unix → datetime</h2>
+        <ColLabel>unix → datetime</ColLabel>
         <div className="flex items-center gap-3 mb-4">
           <input
             type="text" value={unix} onChange={e => setUnix(e.target.value)}
@@ -60,7 +60,7 @@ function UnixTimestampTool() {
 
       {/* DateTime → Unix */}
       <div>
-        <h2 className="text-xs tracking-widest text-gray-400 uppercase mb-4">datetime → unix</h2>
+        <ColLabel>datetime → unix</ColLabel>
         <div className="flex items-center gap-3 mb-4">
           <input
             type="text" value={datetime} onChange={e => setDatetime(e.target.value)}

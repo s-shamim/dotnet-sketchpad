@@ -61,10 +61,7 @@ function JwtCodecTool() {
                 { label: 'signature', val: signature },
               ].map(({ label, val }) => (
                 <div key={label}>
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-xs tracking-widest text-gray-400 uppercase">{label}</h2>
-                    <CopyBtn text={val} />
-                  </div>
+                  <ColLabel action={<CopyBtn text={val} />}>{label}</ColLabel>
                   <pre className="text-sm font-mono text-gray-700 border-b border-gray-100 pb-3 whitespace-pre-wrap break-all">{val}</pre>
                 </div>
               ))}
@@ -80,7 +77,7 @@ function JwtCodecTool() {
             <TArea value={payload} onChange={e => setPayload(e.target.value)} placeholder='{"sub":"1234","name":"Alice","iat":1700000000}' rows={5} />
           </div>
           <div className="mb-5">
-            <h2 className="text-xs tracking-widest text-gray-400 uppercase mb-3">secret</h2>
+            <ColLabel>secret</ColLabel>
             <input
               type="text" value={secret} onChange={e => setSecret(e.target.value)}
               placeholder="signing secret..."
@@ -91,10 +88,7 @@ function JwtCodecTool() {
 
           {encoded && (
             <div className="mt-6">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-xs tracking-widest text-gray-400 uppercase">token</h2>
-                <CopyBtn text={encoded} />
-              </div>
+              <ColLabel action={<CopyBtn text={encoded} />}>token</ColLabel>
               <p className="text-sm font-mono text-gray-700 break-all border-b border-gray-100 pb-3">{encoded}</p>
             </div>
           )}

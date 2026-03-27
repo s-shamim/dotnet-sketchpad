@@ -59,7 +59,7 @@ function DiffTool() {
           {/* Stats */}
           {stats && (stats.added > 0 || stats.removed > 0) ? (
             <div className="flex gap-4 mb-4 text-xs">
-              <span className="text-green-500">+{stats.added} added</span>
+              <span className="text-green-600">+{stats.added} added</span>
               <span className="text-red-400">-{stats.removed} removed</span>
             </div>
           ) : hunks.length > 0 ? (
@@ -69,7 +69,7 @@ function DiffTool() {
           )}
 
           {/* Diff view */}
-          <div className="border border-gray-100 rounded overflow-hidden font-mono text-xs">
+          <div className="border border-gray-100 overflow-hidden font-mono text-xs">
             {hunks.map((h, i) => {
               const bg  = h.type === 'added'   ? 'bg-green-50'  : h.type === 'removed' ? 'bg-red-50'   : '';
               const col = h.type === 'added'   ? 'text-green-600' : h.type === 'removed' ? 'text-red-400' : 'text-gray-500';

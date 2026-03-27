@@ -25,15 +25,7 @@ function QrCodeTool() {
 
       {png && (
         <div className="mt-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs tracking-widest text-gray-400 uppercase">qr code</h2>
-            <a
-              href={png} download="qrcode.png"
-              className="text-xs text-gray-400 hover:text-gray-700 transition-colors lowercase"
-            >
-              download
-            </a>
-          </div>
+          <ColLabel action={<a href={png} download="qrcode.png" className="text-xs text-gray-400 hover:text-gray-700 transition-colors lowercase">download</a>}>qr code</ColLabel>
           <img src={png} alt="qr code" className="w-48 h-48 border border-gray-100" />
         </div>
       )}

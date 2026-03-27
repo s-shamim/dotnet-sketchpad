@@ -37,10 +37,7 @@ function JwtGeneratorTool() {
 
       {token && (
         <div className="mt-6">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xs tracking-widest text-gray-400 uppercase">token</h2>
-            <CopyBtn text={token} />
-          </div>
+          <ColLabel action={<CopyBtn text={token} />}>token</ColLabel>
           <p className="font-mono text-gray-700 text-sm border-b border-gray-100 pb-3 break-all">{token}</p>
         </div>
       )}

@@ -42,7 +42,7 @@ function CronValidatorTool() {
 
       {nexts.length > 0 && (
         <div>
-          <h2 className="text-xs tracking-widest text-gray-400 uppercase mb-4">next 5 occurrences (utc)</h2>
+          <ColLabel>next 5 occurrences (utc)</ColLabel>
           <ul className="divide-y divide-gray-100">
             {nexts.map((ts, i) => (
               <li key={i} className="flex items-center justify-between py-3">

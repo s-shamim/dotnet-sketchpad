@@ -20,7 +20,7 @@ function NumberBaseTool() {
       <PageTitle sub="hex · decimal · binary · octal">number base</PageTitle>
 
       <div className="mb-6">
-        <h2 className="text-xs tracking-widest text-gray-400 uppercase mb-4">input</h2>
+        <ColLabel>input</ColLabel>
         <div className="flex items-center gap-3 mb-4">
           <input
             type="text" value={value} onChange={e => setValue(e.target.value)}
@@ -39,7 +39,7 @@ function NumberBaseTool() {
 
       {result && (
         <div className="space-y-3">
-          <h2 className="text-xs tracking-widest text-gray-400 uppercase mb-4">result</h2>
+          <ColLabel>result</ColLabel>
           {[
             { label: 'decimal',     val: result.dec },
             { label: 'hexadecimal', val: result.hex },

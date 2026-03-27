@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html data-theme="zinc-light">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ui showcase</title>
+
+  <!-- Apply saved theme before page renders to prevent flash -->
+  <script>
+    (function() {
+      var t = localStorage.getItem('ui-theme') || 'zinc';
+      var m = localStorage.getItem('ui-mode')  || 'light';
+      document.documentElement.setAttribute('data-theme', t + '-' + m);
+    })();
+  </script>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            white: 'var(--color-white)',
+            gray: {
+              50:  'var(--gray-50)',
+              100: 'var(--gray-100)',
+              200: 'var(--gray-200)',
+              300: 'var(--gray-300)',
+              400: 'var(--gray-400)',
+              500: 'var(--gray-500)',
+              600: 'var(--gray-600)',
+              700: 'var(--gray-700)',
+              800: 'var(--gray-800)',
+              900: 'var(--gray-900)',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <link rel="stylesheet" href="themes.css" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/light/style.css" />
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <!-- section components loaded first, app.jsx last -->
+  <script type="text/babel" src="icons/Icons.jsx?v=3"></script>
+  <script type="text/babel" src="forms/Forms.jsx?v=3"></script>
+  <script type="text/babel" src="navigation/Navigation.jsx?v=3"></script>
+  <script type="text/babel" src="feedback/Feedback.jsx?v=3"></script>
+  <script type="text/babel" src="overlays/Overlays.jsx?v=3"></script>
+  <script type="text/babel" src="data/DataDisplay.jsx?v=3"></script>
+  <script type="text/babel" src="layout/Layout.jsx?v=3"></script>
+  <script type="text/babel" src="actions/Actions.jsx?v=3"></script>
+  <script type="text/babel" src="wizard/Wizard.jsx?v=3"></script>
+
+  <!-- app shell + shared helpers last -->
+  <script type="text/babel" src="app.jsx?v=3"></script>
+</body>
+
+</html>

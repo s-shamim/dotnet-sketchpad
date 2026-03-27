@@ -222,7 +222,7 @@ function BatchTenantDeletion() {
                 Delay between calls: <span className="font-medium">{delayMs}ms</span>
               </label>
               <input
-                type="range" min="100" max="5000" step="50"
+                type="range" min="100" max="30000" step="50"
                 value={delayMs}
                 onChange={(e) => setDelayMs(parseInt(e.target.value))}
                 disabled={isBusy}

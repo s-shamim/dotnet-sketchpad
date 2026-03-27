@@ -51,10 +51,7 @@ function PasswordTool() {
 
       {output && (
         <div className="mt-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs tracking-widest text-gray-400 uppercase">result</h2>
-            <CopyBtn text={output} />
-          </div>
+          <ColLabel action={<CopyBtn text={output} />}>result</ColLabel>
           <p className="font-mono text-gray-700 text-base border-b border-gray-100 pb-3 break-all">{output}</p>
         </div>
       )}

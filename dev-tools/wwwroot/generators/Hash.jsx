@@ -47,10 +47,7 @@ function HashTool() {
 
       {result && (
         <div className="mt-6">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xs tracking-widest text-gray-400 uppercase">{algorithm}</h2>
-            <CopyBtn text={result} />
-          </div>
+          <ColLabel action={<CopyBtn text={result} />}>{algorithm}</ColLabel>
           <p className="font-mono text-gray-700 text-sm border-b border-gray-100 pb-3 break-all">{result}</p>
         </div>
       )}

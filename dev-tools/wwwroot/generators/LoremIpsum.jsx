@@ -28,10 +28,7 @@ function LoremIpsumTool() {
 
       {output && (
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs tracking-widest text-gray-400 uppercase">output</h2>
-            <CopyBtn text={output} />
-          </div>
+          <ColLabel action={<CopyBtn text={output} />}>output</ColLabel>
           <TArea value={output} readOnly rows={12} placeholder="" />
         </div>
       )}
