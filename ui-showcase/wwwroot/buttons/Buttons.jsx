@@ -65,13 +65,13 @@ function ButtonsSection() {
       <DemoBlock title="icon buttons">
         <div className="flex flex-wrap items-center gap-3">
           {/* icon-only */}
-          <button className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors rounded-sm">
+          <button aria-label="copy" className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors rounded-sm">
             <Icon name="copy" size={16} className="" />
           </button>
-          <button className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors border border-gray-200 rounded-sm">
+          <button aria-label="edit" className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors border border-gray-200 rounded-sm">
             <Icon name="pencil" size={16} className="" />
           </button>
-          <button className="p-1.5 text-gray-400 hover:text-red-400 transition-colors border border-gray-200 rounded-sm">
+          <button aria-label="delete" className="p-1.5 text-gray-400 hover:text-red-400 transition-colors border border-gray-200 rounded-sm">
             <Icon name="trash" size={16} className="" />
           </button>
           {/* icon + label */}

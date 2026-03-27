@@ -58,14 +58,17 @@ function NavigationSection() {
   );
 }
 
-// ── Navigation components ─────────────────────────────────
+// ── Navigation components ──────────────────────────────────
+// Note: SidebarNav is defined in shared.jsx (used by app shell too).
 
 function Tabs({ tabs, active, onChange }) {
   return (
-    <div className="flex gap-1 border-b border-gray-100">
+    <div role="tablist" className="flex gap-1 border-b border-gray-100">
       {tabs.map(tab => (
         <button
           key={tab.id}
+          role="tab"
+          aria-selected={active === tab.id}
           onClick={() => onChange(tab.id)}
           className={`px-3 py-2 text-xs tracking-wide lowercase transition-colors border-b-2 -mb-px ${
             active === tab.id
@@ -82,13 +85,13 @@ function Tabs({ tabs, active, onChange }) {
 
 function Breadcrumbs({ crumbs }) {
   return (
-    <nav className="flex items-center gap-1 text-xs text-gray-400">
+    <nav aria-label="breadcrumb" className="flex items-center gap-1 text-xs text-gray-400">
       {crumbs.map((crumb, i) => (
         <React.Fragment key={crumb.label}>
           {i > 0 && <Icon name="caret-right" size={10} className="text-gray-300" />}
           {crumb.href
             ? <a href={crumb.href} className="hover:text-gray-600 transition-colors lowercase">{crumb.label}</a>
-            : <span className="text-gray-600 lowercase">{crumb.label}</span>
+            : <span aria-current="page" className="text-gray-600 lowercase">{crumb.label}</span>
           }
         </React.Fragment>
       ))}
@@ -96,22 +99,3 @@ function Breadcrumbs({ crumbs }) {
   );
 }
 
-function SidebarNav({ items, active, onChange }) {
-  return (
-    <nav className="flex flex-col gap-0.5">
-      {items.map(item => (
-        <button
-          key={item.id}
-          onClick={() => onChange(item.id)}
-          className={`text-left text-sm px-2 py-1.5 rounded-sm transition-colors lowercase ${
-            active === item.id
-              ? 'text-gray-900 bg-gray-200 font-medium'
-              : 'text-gray-400 hover:text-gray-700'
-          }`}
-        >
-          {item.label}
-        </button>
-      ))}
-    </nav>
-  );
-}

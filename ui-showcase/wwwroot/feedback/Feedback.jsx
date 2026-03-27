@@ -4,7 +4,7 @@ function FeedbackSection() {
 
   return (
     <div>
-      <SectionTitle sub="badge, alert, toast, spinner, skeleton">feedback & status</SectionTitle>
+      <SectionTitle sub="badge, alert, toast, spinner, skeleton">feedback</SectionTitle>
 
       <DemoBlock title="status badges — semantic">
         <div className="flex flex-wrap gap-2">
@@ -175,15 +175,6 @@ function Alert({ variant = 'neutral', children, onClose }) {
         </button>
       )}
     </div>
-  );
-}
-
-function Spinner({ size = 16 }) {
-  return (
-    <span
-      style={{ width: size, height: size }}
-      className="inline-block border-2 border-gray-200 border-t-gray-500 rounded-full animate-spin"
-    />
   );
 }
 

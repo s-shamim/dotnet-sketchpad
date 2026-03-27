@@ -108,9 +108,10 @@ function OverlaysSection() {
 
 // ── Overlay components ────────────────────────────────────
 
-function Modal({ title, children, onClose, actions }) {
+function Modal({ title, children, onClose, actions, size = 'md' }) {
   const dialogRef = React.useRef(null);
   const titleId = React.useId();
+  const maxW = size === 'lg' ? 'max-w-xl' : 'max-w-md';
 
   React.useEffect(() => {
     const el = dialogRef.current;
@@ -142,7 +143,7 @@ function Modal({ title, children, onClose, actions }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative bg-white w-full max-w-md mx-4 p-6 shadow-sm rounded-sm"
+        className={`relative bg-white w-full ${maxW} mx-4 p-6 shadow-sm rounded-sm`}
       >
         <div className="flex items-start justify-between mb-4">
           <h2 id={titleId} className="text-sm tracking-widest text-gray-700 uppercase">{title}</h2>
@@ -197,6 +198,7 @@ function Tooltip({ text, children }) {
 
 function Drawer({ title, children, onClose }) {
   const drawerRef = React.useRef(null);
+  const titleId = React.useId();
 
   React.useEffect(() => {
     const el = drawerRef.current;
@@ -227,10 +229,11 @@ function Drawer({ title, children, onClose }) {
         ref={drawerRef}
         role="dialog"
         aria-modal="true"
+        aria-labelledby={titleId}
         className="relative bg-white w-80 h-full shadow-sm flex flex-col"
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-sm tracking-widest text-gray-700 uppercase">{title}</h2>
+          <h2 id={titleId} className="text-sm tracking-widest text-gray-700 uppercase">{title}</h2>
           <button onClick={onClose} className="text-gray-300 hover:text-gray-600 transition-colors flex items-center">
             <Icon name="x" size={14} className="" />
           </button>

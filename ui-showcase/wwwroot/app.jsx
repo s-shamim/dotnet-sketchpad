@@ -91,7 +91,6 @@ const SECTIONS = [
   { id: 'data',       label: 'data display',   component: DataSection         },
   { id: 'charts',     label: 'charts',         component: ChartsSection       },
   { id: 'layout',     label: 'layout',         component: LayoutSection       },
-  { id: 'containers', label: 'containers',     component: ContainersSection   },
   { id: 'media',      label: 'media',          component: MediaSection        },
   { id: 'actions',    label: 'actions',        component: ActionsSection      },
   { id: 'wizard',     label: 'wizard',         component: WizardSection       },
@@ -116,28 +115,32 @@ function App() {
     <div className="min-h-screen bg-white flex">
 
       {/* Sidebar */}
-      <aside className="w-52 shrink-0 border-r border-gray-100 pt-10 px-5 pb-6 flex flex-col sticky top-0 h-screen overflow-y-auto">
-        <p className="text-xs tracking-widest text-gray-400 uppercase mb-6">ui showcase</p>
-        <SidebarNav
-          items={SECTIONS.map(s => ({ id: s.id, label: s.label }))}
-          active={active}
-          onChange={setActive}
-        />
+      <aside className="w-52 shrink-0 border-r border-gray-100 pt-10 px-5 pb-6 flex flex-col sticky top-0 h-screen">
+        <p className="text-xs tracking-widest text-gray-400 uppercase mb-5">ui showcase</p>
 
         {/* Theme controls */}
-        <div className="mt-auto pt-5 border-t border-gray-100 flex flex-col gap-3">
-          <p className="text-[10px] tracking-widest text-gray-400 uppercase">theme</p>
+        <div className="flex flex-col gap-3 mb-6 pb-5 border-b border-gray-100">
           <Dropdown
             value={theme}
             onChange={setTheme}
             width="w-full"
             options={[
-              { value: 'zinc',    label: 'zinc — neutral'       },
-              { value: 'slate',   label: 'slate — cool'         },
-              { value: 'stone',   label: 'stone — warm'         },
-              { value: 'hc',      label: 'high contrast'        },
-              { value: 'vibrant', label: 'vibrant — indigo'    },
-              { value: 'gray',    label: 'grayscale'            },
+              { value: 'zinc',     label: 'zinc'     },
+              { value: 'arctic',   label: 'arctic'   },
+              { value: 'stone',    label: 'stone'    },
+              { value: 'hc',       label: 'contrast' },
+              { value: 'navy',     label: 'navy'     },
+              { value: 'oxblood',  label: 'oxblood'  },
+              { value: 'racing',   label: 'racing'   },
+              { value: 'fuchsia',  label: 'fuchsia'  },
+              { value: 'amber',    label: 'amber'    },
+              { value: 'teal',     label: 'teal'     },
+              { value: 'crimson',  label: 'crimson'  },
+              { value: 'peach',    label: 'peach'    },
+              { value: 'sky',      label: 'sky'      },
+              { value: 'sage',     label: 'sage'     },
+              { value: 'lavender', label: 'lavender' },
+              { value: 'sand',     label: 'sand'     },
             ]}
           />
           <Toggle
@@ -146,6 +149,12 @@ function App() {
             label="dark mode"
           />
         </div>
+
+        <SidebarNav
+          items={SECTIONS.map(s => ({ id: s.id, label: s.label }))}
+          active={active}
+          onChange={setActive}
+        />
       </aside>
 
       {/* Main content */}

@@ -4,14 +4,15 @@ function FormsSection() {
   const [radio, setRadio] = React.useState('b');
   const [selectVal, setSelectVal] = React.useState('');
   const [kvPairs, setKvPairs] = React.useState([
-    { key: 'Authorization', value: 'Bearer token123', enabled: true },
-    { key: 'Content-Type',  value: 'application/json', enabled: true },
-    { key: 'X-Request-Id',  value: '', enabled: false },
+    { id: 1, key: 'Authorization', value: 'Bearer token123', enabled: true },
+    { id: 2, key: 'Content-Type',  value: 'application/json', enabled: true },
+    { id: 3, key: 'X-Request-Id',  value: '', enabled: false },
   ]);
   const [cb1, setCb1] = React.useState(false);
   const [cb2, setCb2] = React.useState(true);
   const [searchVal, setSearchVal] = React.useState('');
   const [errorTouched, setErrorTouched] = React.useState(false);
+  const [reqValue, setReqValue] = React.useState('');
   const [textareaVal, setTextareaVal] = React.useState('');
   const [textareaCopied, setTextareaCopied] = React.useState(false);
   const [selectedDate, setSelectedDate] = React.useState(null);
@@ -184,30 +185,7 @@ function FormsSection() {
 }
 
 // ── Form components ───────────────────────────────────────
-
-function Toggle({ checked, onChange, label }) {
-  return (
-    <label className="flex items-center gap-3 cursor-pointer group">
-      <button
-        role="switch"
-        aria-checked={checked}
-        onClick={() => onChange(!checked)}
-        className={`relative w-8 h-4 rounded-full transition-colors ${
-          checked ? 'bg-gray-600' : 'bg-gray-200'
-        }`}
-      >
-        <span className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full transition-transform ${
-          checked ? 'translate-x-4' : 'translate-x-0'
-        }`} style={{ backgroundColor: 'var(--toggle-thumb)' }} />
-      </button>
-      {label && (
-        <span className="text-sm text-gray-500 group-hover:text-gray-700 transition-colors lowercase">
-          {label}
-        </span>
-      )}
-    </label>
-  );
-}
+// Note: Toggle is defined in shared.jsx (used by app shell too).
 
 function RadioGroup({ options, value, onChange, name }) {
   return (
@@ -232,37 +210,40 @@ function RadioGroup({ options, value, onChange, name }) {
 }
 
 function KVEditor({ pairs, onChange }) {
-  const update = (i, field, val) => {
-    const next = pairs.map((p, idx) => idx === i ? { ...p, [field]: val } : p);
-    onChange(next);
+  const nextId = React.useRef(pairs.length + 1);
+  const update = (id, field, val) => {
+    onChange(pairs.map(p => p.id === id ? { ...p, [field]: val } : p));
   };
-  const add = () => onChange([...pairs, { key: '', value: '', enabled: true }]);
-  const remove = (i) => onChange(pairs.filter((_, idx) => idx !== i));
+  const add = () => {
+    nextId.current += 1;
+    onChange([...pairs, { id: nextId.current, key: '', value: '', enabled: true }]);
+  };
+  const remove = (id) => onChange(pairs.filter(p => p.id !== id));
 
   return (
     <div className="divide-y divide-gray-100">
-      {pairs.map((pair, i) => (
-        <div key={i} className="flex items-center gap-2 py-2 group">
+      {pairs.map(pair => (
+        <div key={pair.id} className="flex items-center gap-2 py-2 group">
           <input
             type="checkbox"
             checked={pair.enabled}
-            onChange={e => update(i, 'enabled', e.target.checked)}
+            onChange={e => update(pair.id, 'enabled', e.target.checked)}
             className="accent-gray-400 w-3.5 h-3.5 cursor-pointer flex-shrink-0"
           />
           <input
             value={pair.key}
-            onChange={e => update(i, 'key', e.target.value)}
+            onChange={e => update(pair.id, 'key', e.target.value)}
             placeholder="key"
             className="flex-1 border-b border-gray-200 py-1 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:border-gray-400 bg-transparent"
           />
           <input
             value={pair.value}
-            onChange={e => update(i, 'value', e.target.value)}
+            onChange={e => update(pair.id, 'value', e.target.value)}
             placeholder="value"
             className="flex-1 border-b border-gray-200 py-1 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:border-gray-400 bg-transparent"
           />
           <button
-            onClick={() => remove(i)}
+            onClick={() => remove(pair.id)}
             className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition-all flex items-center"
           ><Icon name="x" size={12} className="" /></button>
         </div>

@@ -57,24 +57,26 @@
 <body>
   <div id="root"></div>
 
-  <!-- section components loaded first, app.jsx last -->
-  <script type="text/babel" src="typography/Typography.jsx?v=4"></script>
-  <script type="text/babel" src="icons/Icons.jsx?v=4"></script>
-  <script type="text/babel" src="buttons/Buttons.jsx?v=4"></script>
-  <script type="text/babel" src="forms/Forms.jsx?v=4"></script>
-  <script type="text/babel" src="navigation/Navigation.jsx?v=4"></script>
-  <script type="text/babel" src="feedback/Feedback.jsx?v=4"></script>
-  <script type="text/babel" src="overlays/Overlays.jsx?v=4"></script>
-  <script type="text/babel" src="data/DataDisplay.jsx?v=4"></script>
-  <script type="text/babel" src="charts/Charts.jsx?v=4"></script>
-  <script type="text/babel" src="layout/Layout.jsx?v=4"></script>
-  <script type="text/babel" src="containers/Containers.jsx?v=4"></script>
-  <script type="text/babel" src="media/Media.jsx?v=4"></script>
-  <script type="text/babel" src="actions/Actions.jsx?v=4"></script>
-  <script type="text/babel" src="wizard/Wizard.jsx?v=4"></script>
+  <!-- shared primitives first — Toggle, SidebarNav, Spinner used across sections -->
+  <script type="text/babel" src="shared.jsx?v=5"></script>
 
-  <!-- app shell + shared helpers last -->
-  <script type="text/babel" src="app.jsx?v=4"></script>
+  <!-- section components loaded next, app.jsx last -->
+  <script type="text/babel" src="typography/Typography.jsx?v=5"></script>
+  <script type="text/babel" src="icons/Icons.jsx?v=5"></script>
+  <script type="text/babel" src="buttons/Buttons.jsx?v=5"></script>
+  <script type="text/babel" src="forms/Forms.jsx?v=5"></script>
+  <script type="text/babel" src="navigation/Navigation.jsx?v=5"></script>
+  <script type="text/babel" src="feedback/Feedback.jsx?v=5"></script>
+  <script type="text/babel" src="overlays/Overlays.jsx?v=5"></script>
+  <script type="text/babel" src="data/DataDisplay.jsx?v=5"></script>
+  <script type="text/babel" src="charts/Charts.jsx?v=6"></script>
+  <script type="text/babel" src="layout/Layout.jsx?v=5"></script>
+  <script type="text/babel" src="media/Media.jsx?v=5"></script>
+  <script type="text/babel" src="actions/Actions.jsx?v=5"></script>
+  <script type="text/babel" src="wizard/Wizard.jsx?v=5"></script>
+
+  <!-- app shell last -->
+  <script type="text/babel" src="app.jsx?v=6"></script>
 </body>
 
 </html>

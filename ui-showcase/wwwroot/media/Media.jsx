@@ -22,10 +22,18 @@ function MediaSection() {
   const [selectedImg, setSelectedImg] = React.useState(null);
 
   // ── Gallery lightbox ─────────────────────────────────────
+  const lightboxRef = React.useRef(null);
+
   React.useEffect(() => {
     if (!selectedImg) return;
     function onKey(e) { if (e.key === 'Escape') setSelectedImg(null); }
     document.addEventListener('keydown', onKey);
+    // focus first focusable element for accessibility
+    const el = lightboxRef.current;
+    if (el) {
+      const focusable = el.querySelectorAll('button, [tabindex]:not([tabindex="-1"])');
+      if (focusable.length) focusable[0].focus();
+    }
     return () => document.removeEventListener('keydown', onKey);
   }, [selectedImg]);
 
@@ -53,12 +61,14 @@ function MediaSection() {
             </div>
             {/* prev/next */}
             <button
+              aria-label="previous slide"
               onClick={prev}
               className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 bg-white border border-gray-200 rounded-sm text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors shadow-sm"
             >
               <Icon name="arrow-left" size={12} className="" />
             </button>
             <button
+              aria-label="next slide"
               onClick={next}
               className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-white border border-gray-200 rounded-sm text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors shadow-sm"
             >
@@ -102,6 +112,10 @@ function MediaSection() {
         <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setSelectedImg(null)}>
           <div className="absolute inset-0 bg-black/60" />
           <div
+            ref={lightboxRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="image preview"
             className="relative bg-white rounded-sm border border-gray-200 w-80 h-52 flex flex-col items-center justify-center gap-2 shadow-sm"
             onClick={e => e.stopPropagation()}
           >
