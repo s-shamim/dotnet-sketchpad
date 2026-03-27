@@ -81,21 +81,26 @@ function Dropdown({ value, onChange, options, placeholder = 'select...', width =
 // ── Sections registry ─────────────────────────────────────
 
 const SECTIONS = [
-  { id: 'icons',      label: 'icons',        component: IconsSection      },
-  { id: 'forms',      label: 'forms',        component: FormsSection      },
-  { id: 'navigation', label: 'navigation',   component: NavigationSection },
-  { id: 'feedback',   label: 'feedback',     component: FeedbackSection   },
-  { id: 'overlays',   label: 'overlays',     component: OverlaysSection   },
-  { id: 'data',       label: 'data display', component: DataSection       },
-  { id: 'layout',     label: 'layout',       component: LayoutSection     },
-  { id: 'actions',    label: 'actions',      component: ActionsSection    },
-  { id: 'wizard',     label: 'wizard',       component: WizardSection     },
+  { id: 'typography', label: 'typography',    component: TypographySection  },
+  { id: 'icons',      label: 'icons',          component: IconsSection        },
+  { id: 'buttons',    label: 'buttons',        component: ButtonsSection      },
+  { id: 'forms',      label: 'forms',          component: FormsSection        },
+  { id: 'navigation', label: 'navigation',     component: NavigationSection   },
+  { id: 'feedback',   label: 'feedback',       component: FeedbackSection     },
+  { id: 'overlays',   label: 'overlays',       component: OverlaysSection     },
+  { id: 'data',       label: 'data display',   component: DataSection         },
+  { id: 'charts',     label: 'charts',         component: ChartsSection       },
+  { id: 'layout',     label: 'layout',         component: LayoutSection       },
+  { id: 'containers', label: 'containers',     component: ContainersSection   },
+  { id: 'media',      label: 'media',          component: MediaSection        },
+  { id: 'actions',    label: 'actions',        component: ActionsSection      },
+  { id: 'wizard',     label: 'wizard',         component: WizardSection       },
 ];
 
 // ── App shell ─────────────────────────────────────────────
 
 function App() {
-  const [active, setActive] = React.useState('icons');
+  const [active, setActive] = React.useState('typography');
   const [theme, setTheme]   = React.useState(() => localStorage.getItem('ui-theme') || 'zinc');
   const [mode,  setMode]    = React.useState(() => localStorage.getItem('ui-mode')  || 'light');
 

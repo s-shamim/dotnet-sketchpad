@@ -1,6 +1,8 @@
 function DataSection() {
   const [tags, setTags] = React.useState(['react', 'tailwind', 'dotnet', 'typescript', 'csharp']);
   const [page, setPage] = React.useState(2);
+  const [tableSearch, setTableSearch] = React.useState('');
+  const [methodFilter, setMethodFilter] = React.useState('all');
 
   const sampleJson = JSON.stringify({
     id: "usr_abc123",
@@ -27,14 +29,49 @@ function DataSection() {
 
   return (
     <div>
-      <SectionTitle sub="code block, data table, tags, progress bar, empty state, pagination">data display</SectionTitle>
+      <SectionTitle sub="code block, data table, search/filter, tags, progress bar, empty state, pagination">data display</SectionTitle>
 
       <DemoBlock title="code block">
         <CodeBlock content={sampleJson} language="json" maxHeight={220} />
       </DemoBlock>
 
-      <DemoBlock title="data table">
-        <DataTable columns={columns} rows={rows} />
+      <DemoBlock title="data table — searchable + filterable">
+        <div className="flex items-center gap-3 mb-3">
+          {/* search */}
+          <div className="relative flex items-center flex-1 max-w-xs">
+            <Icon name="magnifying-glass" size={13} className="absolute left-0 text-gray-300 pointer-events-none" />
+            <input
+              value={tableSearch}
+              onChange={e => setTableSearch(e.target.value)}
+              placeholder="search path..."
+              className="w-full border-b border-gray-200 py-1.5 pl-5 text-sm text-gray-700 placeholder-gray-300 bg-transparent focus:outline-none focus:border-gray-500"
+            />
+            {tableSearch && (
+              <button onClick={() => setTableSearch('')} className="absolute right-0 text-gray-300 hover:text-gray-500 transition-colors flex items-center">
+                <Icon name="x" size={11} className="" />
+              </button>
+            )}
+          </div>
+          {/* method filter */}
+          <div className="flex gap-1 text-xs">
+            {['all', 'GET', 'POST', 'PATCH', 'DELETE'].map(m => (
+              <button
+                key={m}
+                onClick={() => setMethodFilter(m)}
+                className={`px-2 py-1 rounded-sm transition-colors lowercase ${
+                  methodFilter === m ? 'bg-gray-100 text-gray-700' : 'text-gray-400 hover:text-gray-600'
+                }`}
+              >{m}</button>
+            ))}
+          </div>
+        </div>
+        <DataTable
+          columns={columns}
+          rows={rows.filter(r =>
+            (methodFilter === 'all' || r.method === methodFilter) &&
+            (!tableSearch || r.path.toLowerCase().includes(tableSearch.toLowerCase()))
+          )}
+        />
       </DemoBlock>
 
       <DemoBlock title="empty table state">
