@@ -233,20 +233,54 @@ function KVEditor({ pairs, onChange }) {
 const MOCK_COLLECTIONS = [
   {
     id: 'col-1', name: 'user api',
+    description: 'user management endpoints',
+    headers: [{ id: 1, key: 'Accept', value: 'application/json', enabled: true }],
+    authType: 'bearer', authData: { token: '{{api_key}}' },
+    preRequestScript: 'set header X-Request-Id = uuid()',
+    testScript: '',
+    settings: { followRedirects: true, verifySsl: false, timeoutMs: 30000 },
+    folders: [
+      {
+        id: 'fld-1', name: 'admin',
+        folders: [],
+        requests: [
+          { id: 'req-3', name: 'get user by id', method: 'GET', url: 'https://api.example.com/users/1', collectionId: 'col-1', collectionName: 'user api', folderId: 'fld-1', folderName: 'admin' },
+        ],
+      },
+    ],
     requests: [
-      { id: 'req-1', name: 'list users', method: 'GET', url: 'https://api.example.com/users', collectionId: 'col-1', collectionName: 'user api' },
-      { id: 'req-2', name: 'create user', method: 'POST', url: 'https://api.example.com/users', collectionId: 'col-1', collectionName: 'user api' },
-      { id: 'req-3', name: 'get user by id', method: 'GET', url: 'https://api.example.com/users/1', collectionId: 'col-1', collectionName: 'user api' },
+      { id: 'req-1', name: 'list users', method: 'GET', url: 'https://api.example.com/users', collectionId: 'col-1', collectionName: 'user api', folderId: null },
+      { id: 'req-2', name: 'create user', method: 'POST', url: 'https://api.example.com/users', collectionId: 'col-1', collectionName: 'user api', folderId: null },
     ],
   },
   {
     id: 'col-2', name: 'order api',
-    requests: [
-      { id: 'req-4', name: 'list orders', method: 'GET', url: 'https://api.example.com/orders', collectionId: 'col-2', collectionName: 'order api' },
-      { id: 'req-5', name: 'create order', method: 'POST', url: 'https://api.example.com/orders', collectionId: 'col-2', collectionName: 'order api' },
-      { id: 'req-6', name: 'delete order', method: 'DELETE', url: 'https://api.example.com/orders/1', collectionId: 'col-2', collectionName: 'order api' },
-      { id: 'req-7', name: 'update order', method: 'PATCH', url: 'https://api.example.com/orders/1', collectionId: 'col-2', collectionName: 'order api' },
+    description: 'order management endpoints',
+    headers: [],
+    authType: 'none', authData: {},
+    preRequestScript: '',
+    testScript: 'status < 500',
+    settings: { followRedirects: true, verifySsl: false, timeoutMs: 30000 },
+    folders: [
+      {
+        id: 'fld-2', name: 'crud',
+        folders: [
+          {
+            id: 'fld-3', name: 'mutations',
+            folders: [],
+            requests: [
+              { id: 'req-5', name: 'create order', method: 'POST', url: 'https://api.example.com/orders', collectionId: 'col-2', collectionName: 'order api', folderId: 'fld-3', folderName: 'mutations' },
+              { id: 'req-6', name: 'delete order', method: 'DELETE', url: 'https://api.example.com/orders/1', collectionId: 'col-2', collectionName: 'order api', folderId: 'fld-3', folderName: 'mutations' },
+              { id: 'req-7', name: 'update order', method: 'PATCH', url: 'https://api.example.com/orders/1', collectionId: 'col-2', collectionName: 'order api', folderId: 'fld-3', folderName: 'mutations' },
+            ],
+          },
+        ],
+        requests: [
+          { id: 'req-4', name: 'list orders', method: 'GET', url: 'https://api.example.com/orders', collectionId: 'col-2', collectionName: 'order api', folderId: 'fld-2', folderName: 'crud' },
+        ],
+      },
     ],
+    requests: [],
   },
 ];
 
@@ -276,11 +310,15 @@ const MOCK_HISTORY = [
 ];
 
 const MOCK_CONSOLE = [
-  { time: '14:32:05', message: 'GET https://api.example.com/users → 200 OK (142ms)', ok: true },
-  { time: '14:30:12', message: 'POST https://api.example.com/users → 201 Created (310ms)', ok: true },
-  { time: '14:28:44', message: 'GET https://api.example.com/orders → 200 OK (98ms)', ok: true },
-  { time: '14:25:01', message: 'DELETE https://api.example.com/orders/5 → 404 Not Found (45ms)', ok: false },
-  { time: '14:20:33', message: 'PUT https://api.example.com/users/3 → 500 Internal Server Error (1200ms)', ok: false },
+  { time: '14:32:05', type: 'request', message: 'GET https://api.example.com/users → 200 OK (142ms)', ok: true },
+  { time: '14:32:05', type: 'test', message: 'status == 200 — passed', ok: true },
+  { time: '14:32:05', type: 'test', message: 'body.length > 0 — passed', ok: true },
+  { time: '14:32:05', type: 'log', message: 'found 3 users', ok: null },
+  { time: '14:30:12', type: 'request', message: 'POST https://api.example.com/users → 201 Created (310ms)', ok: true },
+  { time: '14:28:44', type: 'request', message: 'GET https://api.example.com/orders → 200 OK (98ms)', ok: true },
+  { time: '14:25:01', type: 'request', message: 'DELETE https://api.example.com/orders/5 → 404 Not Found (45ms)', ok: false },
+  { time: '14:25:01', type: 'test', message: 'status == 200 — failed (expected: 200, got: 404)', ok: false },
+  { time: '14:20:33', type: 'request', message: 'PUT https://api.example.com/users/3 → 500 Internal Server Error (1200ms)', ok: false },
 ];
 
 const MOCK_RESPONSE = {
@@ -299,6 +337,15 @@ const MOCK_RESPONSE = {
     'cache-control': 'no-cache',
     'x-ratelimit-remaining': '98',
   },
+  testResults: [
+    { description: 'status == 200', passed: true },
+    { description: 'body.length > 0', passed: true },
+    { description: 'body[0].name == "Alice Johnson"', passed: true },
+    { description: 'header content-type contains json', passed: true },
+    { description: 'duration < 500', passed: true },
+    { description: 'body[0].role == "user"', passed: false, expected: 'user', actual: 'admin' },
+  ],
+  scriptLogs: ['found 3 users'],
 };
 
 function newTab() {
@@ -315,6 +362,9 @@ function newTab() {
     body: '',
     bodyType: 'none',
     auth: { type: 'none' },
+    preRequestScript: '',
+    testScript: '',
+    settings: { followRedirects: true, verifySsl: false, timeoutMs: 30000 },
   };
 }
 
@@ -352,6 +402,7 @@ function App() {
       url: 'https://api.example.com/users',
       collectionId: 'col-1',
       collectionName: 'user api',
+      breadcrumb: ['user api'],
       saved: true,
       params: [
         { id: 1, key: 'page', value: '1', enabled: true },
@@ -372,6 +423,7 @@ function App() {
       url: 'https://api.example.com/users',
       collectionId: 'col-1',
       collectionName: 'user api',
+      breadcrumb: ['user api'],
       saved: true,
       params: [{ id: 1, key: '', value: '', enabled: true }],
       headers: [{ id: 1, key: 'Content-Type', value: 'application/json', enabled: true }],
@@ -412,7 +464,7 @@ function App() {
   }, []);
 
   function startDrag(e) {
-    const container = e.target.parentElement;
+    const container = e.currentTarget.parentElement;
     if (!container) return;
     const axis = splitDirection === 'horizontal' ? 'x' : 'y';
     const rect = container.getBoundingClientRect();
@@ -455,6 +507,27 @@ function App() {
     });
   }
 
+  // Build breadcrumb path: [collectionName, folder1, folder2, ...]
+  function buildBreadcrumb(req) {
+    if (!req.collectionId) return [];
+    const col = collections.find(c => c.id === req.collectionId);
+    if (!col) return [];
+    const path = [col.name];
+    if (!req.folderId) return path;
+    // Walk folder tree to find the path to this folder
+    function findPath(folders, targetId, trail) {
+      for (const f of folders) {
+        const next = [...trail, f.name];
+        if (f.id === targetId) return next;
+        const found = findPath(f.folders || [], targetId, next);
+        if (found) return found;
+      }
+      return null;
+    }
+    const folderPath = findPath(col.folders || [], req.folderId, []);
+    return folderPath ? [...path, ...folderPath] : path;
+  }
+
   function openRequest(req) {
     const existing = tabs.find(t => t.id === req.id);
     if (existing) {
@@ -468,6 +541,7 @@ function App() {
       url: req.url,
       collectionId: req.collectionId || null,
       collectionName: req.collectionName || null,
+      breadcrumb: buildBreadcrumb(req),
       saved: !!req.collectionId,
       params: [{ id: 1, key: '', value: '', enabled: true }],
       headers: [{ id: 1, key: '', value: '', enabled: true }],
@@ -493,6 +567,39 @@ function App() {
     if (type === 'request') addTab();
     else if (type === 'environment') { setModalData(null); setModalOpen('env'); }
     else if (type === 'collection') { setModalData(null); setModalOpen('collection'); }
+  }
+
+  // Rename helpers — update name in collections state tree
+  function renameCollection(colId, newName) {
+    setCollections(prev => prev.map(c => c.id === colId ? { ...c, name: newName } : c));
+  }
+
+  function renameFolder(folderId, newName) {
+    function renameFolderIn(folders) {
+      return folders.map(f =>
+        f.id === folderId
+          ? { ...f, name: newName }
+          : { ...f, folders: renameFolderIn(f.folders || []) }
+      );
+    }
+    setCollections(prev => prev.map(c => ({ ...c, folders: renameFolderIn(c.folders || []) })));
+  }
+
+  function renameRequest(reqId, newName) {
+    function renameReqInFolders(folders) {
+      return folders.map(f => ({
+        ...f,
+        requests: f.requests.map(r => r.id === reqId ? { ...r, name: newName } : r),
+        folders: renameReqInFolders(f.folders || []),
+      }));
+    }
+    setCollections(prev => prev.map(c => ({
+      ...c,
+      requests: (c.requests || []).map(r => r.id === reqId ? { ...r, name: newName } : r),
+      folders: renameReqInFolders(c.folders || []),
+    })));
+    // Also update the tab name if this request is open
+    setTabs(prev => prev.map(t => t.id === reqId ? { ...t, name: newName } : t));
   }
 
   const inputStyle = paneSize != null
@@ -537,6 +644,9 @@ function App() {
             onEditEnv={openEnvModal}
             onEditCollection={openCollectionModal}
             onNewAction={handleNewAction}
+            onRenameCollection={renameCollection}
+            onRenameFolder={renameFolder}
+            onRenameRequest={renameRequest}
           />
         )}
 
@@ -554,8 +664,9 @@ function App() {
           {/* Request shoulder */}
           <RequestShoulder
             name={activeTab?.name}
-            collectionName={activeTab?.collectionName}
+            breadcrumb={activeTab?.breadcrumb || []}
             saved={activeTab?.saved}
+            onRename={newName => updateActiveTab({ name: newName })}
           />
 
           {/* URL bar */}

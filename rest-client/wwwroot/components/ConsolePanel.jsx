@@ -48,17 +48,38 @@ window.ConsolePanel = function ConsolePanel({ open, onToggle, logs, onClear }) {
         {logs.length === 0 && (
           <p className="text-center text-gray-300 text-xs py-4 lowercase">no log entries</p>
         )}
-        {logs.map((log, i) => (
-          <div key={i} className="flex items-center gap-2 px-4 py-1 border-b border-gray-100 hover:bg-gray-100 transition-colors">
-            <span className="text-[10px] text-gray-300 font-mono flex-shrink-0">{log.time}</span>
-            <Icon
-              name={log.ok ? 'check-circle' : 'x-circle'}
-              size={12}
-              className={log.ok ? 'text-green-600 flex-shrink-0' : 'text-red-400 flex-shrink-0'}
-            />
-            <span className="text-[10px] text-gray-500 font-mono truncate">{log.message}</span>
-          </div>
-        ))}
+        {logs.map((log, i) => {
+          let icon, iconClass;
+          switch (log.type) {
+            case 'test':
+              icon = log.ok ? 'check-circle' : 'x-circle';
+              iconClass = log.ok ? 'text-green-600' : 'text-red-400';
+              break;
+            case 'log':
+              icon = 'info';
+              iconClass = 'text-gray-400';
+              break;
+            case 'warning':
+              icon = 'warning';
+              iconClass = 'text-yellow-500';
+              break;
+            case 'request':
+            default:
+              icon = log.ok ? 'check-circle' : 'x-circle';
+              iconClass = log.ok ? 'text-green-600' : 'text-red-400';
+              break;
+          }
+          return (
+            <div key={i} className="flex items-center gap-2 px-4 py-1 border-b border-gray-100 hover:bg-gray-100 transition-colors">
+              <span className="text-[10px] text-gray-300 font-mono flex-shrink-0">{log.time}</span>
+              <Icon name={icon} size={12} className={`${iconClass} flex-shrink-0`} />
+              {log.type && (
+                <span className={`text-[9px] uppercase tracking-wider ${iconClass} flex-shrink-0 w-10`}>{log.type}</span>
+              )}
+              <span className="text-[10px] text-gray-500 font-mono truncate">{log.message}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

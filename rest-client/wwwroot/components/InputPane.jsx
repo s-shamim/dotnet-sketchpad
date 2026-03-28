@@ -151,10 +151,11 @@ window.InputPane = function InputPane({ tab, onUpdate }) {
         {activeInput === 'scripts' && (
           <div className="flex flex-col gap-2">
             <label className="text-xs text-gray-400 lowercase">pre-request script</label>
-            <textarea
-              rows={6}
-              placeholder="// pre-request script..."
-              className="w-full border-b border-gray-300 py-2 text-sm text-gray-700 placeholder-gray-300 bg-transparent resize-none focus:outline-none focus:border-gray-500 font-mono"
+            <ScriptEditor
+              value={tab?.preRequestScript || ''}
+              onChange={v => onUpdate({ preRequestScript: v })}
+              placeholder={'# runs before sending\nset header X-Request-Id = uuid()\nset header X-Timestamp = now()'}
+              environments={[]}
             />
           </div>
         )}
@@ -163,10 +164,11 @@ window.InputPane = function InputPane({ tab, onUpdate }) {
         {activeInput === 'tests' && (
           <div className="flex flex-col gap-2">
             <label className="text-xs text-gray-400 lowercase">test script</label>
-            <textarea
-              rows={6}
-              placeholder="// test assertions..."
-              className="w-full border-b border-gray-300 py-2 text-sm text-gray-700 placeholder-gray-300 bg-transparent resize-none focus:outline-none focus:border-gray-500 font-mono"
+            <ScriptEditor
+              value={tab?.testScript || ''}
+              onChange={v => onUpdate({ testScript: v })}
+              placeholder={'# assertions run after response\nstatus == 200\nbody.length > 0\nheader content-type contains json\nduration < 1000'}
+              environments={[]}
             />
           </div>
         )}
@@ -174,14 +176,28 @@ window.InputPane = function InputPane({ tab, onUpdate }) {
         {/* Settings */}
         {activeInput === 'settings' && (
           <div className="flex flex-col gap-3">
-            <p className="text-xs text-gray-300 lowercase">request-level settings</p>
+            <p className="text-xs text-gray-300 lowercase">request-level settings (override collection defaults)</p>
             <div className="flex items-center gap-2">
-              <input type="checkbox" className="accent-gray-400 w-3.5 h-3.5 cursor-pointer" defaultChecked />
+              <input type="checkbox" className="accent-gray-400 w-3.5 h-3.5 cursor-pointer"
+                checked={tab?.settings?.followRedirects ?? true}
+                onChange={e => onUpdate({ settings: { ...tab?.settings, followRedirects: e.target.checked } })}
+              />
               <span className="text-sm text-gray-600 lowercase">follow redirects</span>
             </div>
             <div className="flex items-center gap-2">
-              <input type="checkbox" className="accent-gray-400 w-3.5 h-3.5 cursor-pointer" />
+              <input type="checkbox" className="accent-gray-400 w-3.5 h-3.5 cursor-pointer"
+                checked={tab?.settings?.verifySsl ?? false}
+                onChange={e => onUpdate({ settings: { ...tab?.settings, verifySsl: e.target.checked } })}
+              />
               <span className="text-sm text-gray-600 lowercase">verify ssl</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-gray-400 lowercase">timeout (ms)</label>
+              <input type="number"
+                value={tab?.settings?.timeoutMs ?? 30000}
+                onChange={e => onUpdate({ settings: { ...tab?.settings, timeoutMs: parseInt(e.target.value) || 30000 } })}
+                className="w-24 border-b border-gray-300 py-1 text-sm text-gray-700 bg-transparent focus:outline-none focus:border-gray-500"
+              />
             </div>
           </div>
         )}

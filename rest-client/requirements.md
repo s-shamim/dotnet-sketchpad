@@ -21,6 +21,7 @@
    - 5.7 [Script Autocomplete](#57-script-autocomplete)  
    - 5.8 [Console](#58-console)  
    - 5.9 [Settings & Preferences](#59-settings--preferences)  
+   - 5.10 [Collection Import & Base URL](#510-collection-import--base-url)  
 6. [API Endpoints](#api-endpoints)  
 7. [Inheritance & Merge Rules](#inheritance--merge-rules)  
 8. [File Structure](#file-structure)  
@@ -75,6 +76,7 @@ Browser (React 18)                    Server (ASP.NET + EF Core + SQLite)
 │ Id              int          PK                         │
 │ Name            string                                  │
 │ Description     string       nullable                   │
+│ BaseUrl         string       nullable — e.g. {{baseUrl}}│
 │ Headers         string       json — default headers     │
 │ AuthType        string       none|bearer|basic|api-key  │
 │ AuthData        string       json — credentials         │
@@ -297,18 +299,25 @@ Browser (React 18)                    Server (ASP.NET + EF Core + SQLite)
 
 **Collection:**
 - Named container for requests
-- Has **default headers, auth, pre-request script, test script, settings** inherited by all requests
+- Has **base URL, default headers, auth, pre-request script, test script, settings** inherited by all requests
+- **Base URL** (`BaseUrl`): optional, supports env variables (e.g. `{{baseUrl}}`). When set, request URLs are stored as relative paths (e.g. `/users/1`). At execution time, the server prepends the base URL. If a request URL starts with `http://` or `https://`, the base URL is ignored (absolute override).
 - Editable via CollectionModal (tabs: settings, headers, auth, scripts, tests, import)
 - Sortable (drag order persisted via `SortOrder`)
 
 **Folder:**
-- Named grouping within a collection
+- Named grouping within a collection — also referred to as **tags** (folders act as tag categories)
 - Self-referencing hierarchy (unlimited nesting via `ParentFolderId`)
 - Requests at collection root have `FolderId = null`
 - Collapsed/expanded state managed in UI (not persisted)
+- Folders/tags can be organized hierarchically to group requests by domain, resource, or any custom taxonomy
+
+**Auto-naming:**
+- When importing or creating a request with a URL path, the request name defaults to the **path portion** after the base URL — e.g. a request to `{{baseUrl}}/users/1` in collection with base URL `{{baseUrl}}` is named `/users/1`
+- If the URL is absolute (e.g. `https://api.example.com/users`), the request name defaults to the path segment: `/users`
+- Names can always be manually overridden
 
 **Import/Export:**
-- Import from JSON (Postman v2.1 collection format)
+- Import from JSON (see §5.10 for full import specification)
 - Export collection as JSON
 - Import section in CollectionModal
 
@@ -557,6 +566,95 @@ Example entries:
 14:30:12  ✕  test: status is 200 — failed (expected: 200, got: 404)
 ```
 
+### 5.10 Collection Import & Base URL
+
+**Import sources:**
+- **Postman v2.1** JSON collection format (auto-detected by `info.schema` field)
+- **Custom JSON** — simplified flat/nested format (see below)
+- Paste JSON directly in the CollectionModal import tab, or upload a `.json` file
+
+**Custom JSON import format:**
+```json
+{
+  "name": "my api",
+  "baseUrl": "{{baseUrl}}",
+  "description": "optional description",
+  "folders": [
+    {
+      "name": "users",
+      "requests": [
+        { "method": "GET", "path": "/users" },
+        { "method": "POST", "path": "/users" },
+        { "method": "GET", "path": "/users/:id" },
+        { "method": "PUT", "path": "/users/:id" },
+        { "method": "DELETE", "path": "/users/:id" }
+      ],
+      "folders": [
+        {
+          "name": "admin",
+          "requests": [
+            { "method": "GET", "path": "/users/admin/list" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "orders",
+      "requests": [
+        { "method": "GET", "path": "/orders" },
+        { "method": "POST", "path": "/orders" }
+      ]
+    }
+  ],
+  "requests": [
+    { "method": "GET", "path": "/health" }
+  ]
+}
+```
+
+**Import rules:**
+- `baseUrl` is set on the Collection's `BaseUrl` field — can use env variables like `{{baseUrl}}`
+- Each `path` becomes the request URL (relative). At runtime, `BaseUrl + path` forms the full URL
+- Request **name** defaults to the `path` value (e.g. `/users/:id`) — the user can rename later
+- If a request has `"name": "custom name"` explicitly, that is used instead of the path
+- If a request has a full `"url": "https://..."` instead of `"path"`, it's stored as-is (absolute URL)
+- Folders in the JSON become Folder entities with the given names
+- Nested folders are supported (maps to `ParentFolderId`)
+- Root-level `requests` array items have `FolderId = null`
+
+**Base URL in the UI:**
+- Shown in CollectionModal settings tab as an editable field
+- Displayed as a subtle prefix in the UrlBar when the active request belongs to a collection with a base URL set
+- The UrlBar input shows the **relative path** only; the base URL prefix appears as a non-editable label
+- If the user types a full URL starting with `http://` or `https://`, the base URL prefix is hidden (absolute override)
+
+**Postman v2.1 import mapping:**
+
+| Postman field | Maps to |
+|---|---|
+| `info.name` | `Collection.Name` |
+| `info.description` | `Collection.Description` |
+| `item[].name` (no `item` children) | `Request.Name` |
+| `item[].request.method` | `Request.Method` |
+| `item[].request.url.raw` | `Request.Url` |
+| `item[].request.header[]` | `Request.Headers` |
+| `item[].request.body.raw` | `Request.Body` |
+| `item[].request.auth` | `Request.AuthType` + `AuthData` |
+| `item[].item` (nested) | `Folder` (recursive) |
+| `variable[]` | Environment variables (optionally create an env) |
+
+- During Postman import, the user is prompted to **provide a base URL** (e.g. `{{baseUrl}}`)
+- If provided, the importer strips the matching prefix from all request URLs and stores them as relative paths
+- If the Postman collection has a `variable` named `baseUrl`, it is used as the default suggestion
+
+**API endpoint:**
+
+| Method | Path | Description |
+|---|---|---|
+| POST | `/api/collections/import` | Import a collection from JSON (body: `{ format, json, baseUrl? }`) |
+
+---
+
 ### 5.9 Settings & Preferences
 
 **Preference keys** (stored in Preference table):
@@ -588,8 +686,9 @@ Example entries:
 |---|---|---|
 | GET | `/api/collections` | List all collections with folders and requests |
 | POST | `/api/collections` | Create collection |
-| PUT | `/api/collections/{id}` | Update collection (name, headers, auth, scripts, settings) |
+| PUT | `/api/collections/{id}` | Update collection (name, baseUrl, headers, auth, scripts, settings) |
 | DELETE | `/api/collections/{id}` | Delete collection and all its requests |
+| POST | `/api/collections/import` | Import collection from JSON (Postman v2.1 or custom format) |
 
 ### Folders
 
