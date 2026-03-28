@@ -70,32 +70,32 @@ Browser (React 18)                    Server (ASP.NET + EF Core + SQLite)
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                       Collection                         │
+│                       Collection                        │
 ├─────────────────────────────────────────────────────────┤
-│ Id              int          PK                          │
-│ Name            string                                   │
-│ Description     string       nullable                    │
-│ Headers         string       json — default headers      │
-│ AuthType        string       none|bearer|basic|api-key   │
-│ AuthData        string       json — credentials          │
-│ PreRequestScript string      nullable                    │
-│ TestScript      string       nullable                    │
-│ Settings        string       json — defaults              │
-│ SortOrder       int                                      │
-│ CreatedAt       datetime                                 │
-│ UpdatedAt       datetime                                 │
-└────────────┬────────────────────────────────────────────┘
-             │ 1:N                    1:N
+│ Id              int          PK                         │
+│ Name            string                                  │
+│ Description     string       nullable                   │
+│ Headers         string       json — default headers     │
+│ AuthType        string       none|bearer|basic|api-key  │
+│ AuthData        string       json — credentials         │
+│ PreRequestScript string      nullable                   │
+│ TestScript      string       nullable                   │
+│ Settings        string       json — defaults            │
+│ SortOrder       int                                     │
+│ CreatedAt       datetime                                │
+│ UpdatedAt       datetime                                │
+└────────────┬────────────────────────┬────────────────────┘
+             │ 1:N                    │ 1:N
              ▼                        ▼
-┌────────────────────────┐  ┌──────────────────────────────────────────┐
-│        Folder           │  │              Request                      │
-├────────────────────────┤  ├──────────────────────────────────────────┤
-│ Id            int   PK  │  │ Id              int        PK             │
-│ CollectionId  int   FK  │  │ CollectionId    int        FK             │
-│ ParentFolderId int  FK  │  │ FolderId        int        FK nullable    │
-│   (nullable, self-ref)  │  │ Name            string                    │
-│ Name          string    │  │ Method          string     GET|POST|...   │
-│ SortOrder     int       │  │ Url             string                    │
+┌────────────────────────┐  ┌────────────────────────────────────────────┐
+│        Folder          │  │              Request                       │
+├────────────────────────┤  ├────────────────────────────────────────────┤
+│ Id            int   PK │  │ Id              int        PK              │
+│ CollectionId  int   FK │  │ CollectionId    int        FK              │
+│ ParentFolderId int  FK │  │ FolderId        int        FK nullable     │
+│   (nullable, self-ref) │  │ Name            string                     │
+│ Name          string   │  │ Method          string     GET|POST|...    │
+│ SortOrder     int      │  │ Url             string                     │
 ├────────────────────────┤  │ Params          string     json            │
 │ Folder ──┐ self-ref    │  │ Headers         string     json            │
 │          │ 1:N         │  │ Body            string     nullable        │
@@ -105,15 +105,15 @@ Browser (React 18)                    Server (ASP.NET + EF Core + SQLite)
              │              │ PreRequestScript string    nullable        │
              │ 1:N          │ TestScript      string     nullable        │
              ▼              │ Settings        string     json            │
-        ┌─ Request          │ SortOrder       int                        │
+           Request          │ SortOrder       int                        │
                             │ CreatedAt       datetime                   │
                             │ UpdatedAt       datetime                   │
-                            └──────────┬───────────────────────────────┘
+                            └──────────┬─────────────────────────────────┘
                                        │ 0..1
                                        ▼
-                            ┌──────────────────────────────┐
+                            ┌───────────────────────────────┐
                             │          OpenTab              │
-                            ├──────────────────────────────┤
+                            ├───────────────────────────────┤
                             │ Id          int       PK      │
                             │ RequestId   int       FK null │
                             │ Name        string            │
@@ -122,10 +122,10 @@ Browser (React 18)                    Server (ASP.NET + EF Core + SQLite)
                             │ IsActive    bool              │
                             │ SortOrder   int               │
                             │ DraftState  string   json     │
-                            └──────────────────────────────┘
+                            └───────────────────────────────┘
 
 ┌──────────────────────────────┐    ┌──────────────────────────────┐
-│        Environment            │    │       HistoryEntry            │
+│        Environment           │    │       HistoryEntry           │
 ├──────────────────────────────┤    ├──────────────────────────────┤
 │ Id          int       PK     │    │ Id              int    PK    │
 │ Name        string           │    │ Method          string       │
@@ -142,7 +142,7 @@ Browser (React 18)                    Server (ASP.NET + EF Core + SQLite)
 │ │ EnvironmentId  int    FK │ │    └──────────────────────────────┘
 │ │ Key            string    │ │
 │ │ InitialValue   string    │ │    ┌──────────────────────────────┐
-│ │ CurrentValue   string    │ │    │        Preference             │
+│ │ CurrentValue   string    │ │    │        Preference            │
 │ │ Enabled        bool      │ │    ├──────────────────────────────┤
 │ │ SortOrder      int       │ │    │ Id    int     PK             │
 │ └──────────────────────────┘ │    │ Key   string  unique         │
