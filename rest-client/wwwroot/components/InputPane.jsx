@@ -1,6 +1,6 @@
 // InputPane.jsx — tabbed input: params, headers, body, auth, scripts, tests, settings
 
-window.InputPane = function InputPane({ tab, onUpdate }) {
+window.InputPane = function InputPane({ tab, onUpdate, environments, lastResponse }) {
   const [activeInput, setActiveInput] = React.useState('params');
 
   const inputTabs = [
@@ -123,8 +123,8 @@ window.InputPane = function InputPane({ tab, onUpdate }) {
                 <div>
                   <label className="text-xs text-gray-400 lowercase mb-1 block">key name</label>
                   <input
-                    value={tab?.auth?.apiKeyName || ''}
-                    onChange={e => onUpdate({ auth: { ...tab?.auth, apiKeyName: e.target.value } })}
+                    value={tab?.auth?.name || ''}
+                    onChange={e => onUpdate({ auth: { ...tab?.auth, name: e.target.value } })}
                     placeholder="X-API-Key..."
                     className="w-full border-b border-gray-300 py-2 text-sm text-gray-700 placeholder-gray-300 bg-transparent focus:outline-none focus:border-gray-500"
                   />
@@ -136,6 +136,18 @@ window.InputPane = function InputPane({ tab, onUpdate }) {
                     onChange={e => onUpdate({ auth: { ...tab?.auth, apiKeyValue: e.target.value } })}
                     placeholder="api key value..."
                     className="w-full border-b border-gray-300 py-2 text-sm text-gray-700 placeholder-gray-300 bg-transparent focus:outline-none focus:border-gray-500 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 lowercase mb-1 block">add to</label>
+                  <Dropdown
+                    value={tab?.auth?.addTo || 'header'}
+                    onChange={v => onUpdate({ auth: { ...tab?.auth, addTo: v } })}
+                    options={[
+                      { value: 'header', label: 'request header' },
+                      { value: 'query', label: 'query param' },
+                    ]}
+                    width="w-40"
                   />
                 </div>
               </div>
@@ -155,7 +167,8 @@ window.InputPane = function InputPane({ tab, onUpdate }) {
               value={tab?.preRequestScript || ''}
               onChange={v => onUpdate({ preRequestScript: v })}
               placeholder={'# runs before sending\nset header X-Request-Id = uuid()\nset header X-Timestamp = now()'}
-              environments={[]}
+              environments={environments || []}
+              lastResponse={lastResponse}
             />
           </div>
         )}
@@ -168,7 +181,8 @@ window.InputPane = function InputPane({ tab, onUpdate }) {
               value={tab?.testScript || ''}
               onChange={v => onUpdate({ testScript: v })}
               placeholder={'# assertions run after response\nstatus == 200\nbody.length > 0\nheader content-type contains json\nduration < 1000'}
-              environments={[]}
+              environments={environments || []}
+              lastResponse={lastResponse}
             />
           </div>
         )}

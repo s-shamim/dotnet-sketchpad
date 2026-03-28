@@ -17,7 +17,7 @@
 
   <!-- 2. React 18 + ReactDOM -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
   <!-- 3. Babel (JSX transform) -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -32,6 +32,7 @@
         extend: {
           fontFamily: {
             sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
           },
           colors: {
             white: 'var(--color-white)',
@@ -56,10 +57,10 @@
   <!-- 6. Theme CSS vars -->
   <link rel="stylesheet" href="themes.css" />
 
-  <!-- 7. Inter font -->
+  <!-- 7. Inter + JetBrains Mono fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
   <!-- 8. Phosphor icons (ph-light) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/light/style.css" />
@@ -98,6 +99,7 @@
   <script type="text/babel" src="components/ConsolePanel.jsx?v=2"></script>
   <script type="text/babel" src="components/EnvModal.jsx?v=1"></script>
   <script type="text/babel" src="components/CollectionModal.jsx?v=2"></script>
+  <script type="text/babel" src="components/WorkspaceModal.jsx?v=1"></script>
   <script type="text/babel" src="app.jsx?v=4"></script>
 </body>
 

@@ -3,6 +3,7 @@
 window.EnvModal = function EnvModal({ environments, editEnvId, onClose, onSave }) {
   const [localEnvs, setLocalEnvs] = React.useState(() => JSON.parse(JSON.stringify(environments)));
   const [selectedEnvId, setSelectedEnvId] = React.useState(editEnvId || environments[0]?.id || null);
+  const [confirmDeleteId, setConfirmDeleteId] = React.useState(null);
 
   const selectedEnv = localEnvs.find(e => e.id === selectedEnvId);
   const nextVarId = React.useRef(100);
@@ -46,6 +47,16 @@ window.EnvModal = function EnvModal({ environments, editEnvId, onClose, onSave }
     const newEnv = { id, name: 'new environment', variables: [] };
     setLocalEnvs(prev => [...prev, newEnv]);
     setSelectedEnvId(id);
+    setConfirmDeleteId(null);
+  }
+
+  function deleteEnv(id) {
+    const remaining = localEnvs.filter(e => e.id !== id);
+    setLocalEnvs(remaining);
+    setConfirmDeleteId(null);
+    if (selectedEnvId === id) {
+      setSelectedEnvId(remaining[0]?.id || null);
+    }
   }
 
   return (
@@ -63,17 +74,43 @@ window.EnvModal = function EnvModal({ environments, editEnvId, onClose, onSave }
       {/* Env tab strip */}
       <div className="flex gap-1 border-b border-gray-100 mb-4">
         {localEnvs.map(env => (
-          <button
-            key={env.id}
-            onClick={() => setSelectedEnvId(env.id)}
-            className={`px-3 py-2 text-xs tracking-wide lowercase transition-colors border-b-2 -mb-px ${
-              selectedEnvId === env.id
-                ? 'border-gray-700 text-gray-700'
-                : 'border-transparent text-gray-400 hover:text-gray-600'
-            }`}
-          >
-            {env.name}
-          </button>
+          <div key={env.id} className="flex items-center group">
+            <button
+              onClick={() => { setSelectedEnvId(env.id); setConfirmDeleteId(null); }}
+              className={`px-3 py-2 text-xs tracking-wide lowercase transition-colors border-b-2 -mb-px flex items-center gap-1 ${
+                selectedEnvId === env.id
+                  ? 'border-gray-700 text-gray-700'
+                  : 'border-transparent text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              {env.name}
+              {env.isGlobal && <Icon name="globe-simple" size={10} className="" />}
+            </button>
+            {confirmDeleteId === env.id ? (
+              <div className="flex items-center gap-1 pb-px">
+                <button
+                  onClick={() => deleteEnv(env.id)}
+                  className="text-[10px] text-red-500 hover:text-red-700 transition-colors px-1 lowercase"
+                >
+                  delete
+                </button>
+                <button
+                  onClick={() => setConfirmDeleteId(null)}
+                  className="text-[10px] text-gray-400 hover:text-gray-600 transition-colors px-1 lowercase"
+                >
+                  cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmDeleteId(env.id)}
+                className="opacity-0 group-hover:opacity-100 pb-px text-gray-300 hover:text-red-400 transition-all flex items-center"
+                aria-label={`delete ${env.name}`}
+              >
+                <Icon name="x" size={10} className="" />
+              </button>
+            )}
+          </div>
         ))}
         <button
           onClick={addNewEnv}
@@ -92,6 +129,25 @@ window.EnvModal = function EnvModal({ environments, editEnvId, onClose, onSave }
               value={selectedEnv.name}
               onChange={e => updateEnvName(e.target.value)}
               className="w-full border-b border-gray-300 py-2 text-sm text-gray-700 placeholder-gray-300 bg-transparent focus:outline-none focus:border-gray-500"
+            />
+          </div>
+
+          {/* Global toggle */}
+          <div className="flex items-center justify-between py-2 border-b border-gray-100 mb-4">
+            <div className="flex items-center gap-2">
+              <Icon name="globe-simple" size={13} className="text-gray-400" />
+              <span className="text-xs text-gray-600 lowercase">global environment</span>
+              <span className="text-[10px] text-gray-300 lowercase">always merged as base layer</span>
+            </div>
+            <Toggle
+              checked={selectedEnv.isGlobal || false}
+              onChange={v => {
+                setLocalEnvs(prev => prev.map(env =>
+                  env.id === selectedEnvId
+                    ? { ...env, isGlobal: v }
+                    : v ? { ...env, isGlobal: false } : env
+                ));
+              }}
             />
           </div>
 

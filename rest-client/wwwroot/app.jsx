@@ -117,7 +117,6 @@ function Modal({ title, children, onClose, actions, size = 'md' }) {
     const focusable = Array.from(el.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'));
     if (focusable.length) focusable[0].focus();
     function handleKey(e) {
-      if (e.key === 'Escape') { onClose(); return; }
       if (e.key !== 'Tab' || focusable.length === 0) return;
       const first = focusable[0], last = focusable[focusable.length - 1];
       if (e.shiftKey) {
@@ -131,7 +130,7 @@ function Modal({ title, children, onClose, actions, size = 'md' }) {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.18)' }} onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.18)' }}>
       <div
         ref={dialogRef}
         role="dialog"
@@ -285,7 +284,19 @@ const MOCK_COLLECTIONS = [
   },
 ];
 
+const MOCK_WORKSPACES = [
+  { id: 'ws-1', name: 'default', isActive: true },
+  { id: 'ws-2', name: 'personal', isActive: false },
+];
+
 const MOCK_ENVIRONMENTS = [
+  {
+    id: 'env-0', name: 'common',
+    isGlobal: true,
+    variables: [
+      { id: 1, key: 'api_version', initialValue: 'v1', currentValue: 'v1', enabled: true },
+    ],
+  },
   {
     id: 'env-1', name: 'development',
     variables: [
@@ -311,13 +322,31 @@ const MOCK_HISTORY = [
 ];
 
 const MOCK_CONSOLE = [
-  { time: '14:32:05', type: 'request', message: 'GET https://api.example.com/users → 200 OK (142ms)', ok: true },
+  {
+    time: '14:32:05', type: 'request', message: 'GET https://api.example.com/users → 200 OK (142ms)', ok: true,
+    detail: {
+      request: { method: 'GET', url: 'https://api.example.com/users', headers: { 'Authorization': 'Bearer dev-key-123', 'Accept': 'application/json' } },
+      response: { status: 200, statusText: 'OK', duration: 142, headers: { 'content-type': 'application/json; charset=utf-8', 'x-request-id': 'abc-123-def' }, body: '[{"id":1,"name":"Alice Johnson"},{"id":2,"name":"Bob Smith"}]' },
+    },
+  },
   { time: '14:32:05', type: 'test', message: 'status == 200 — passed', ok: true },
   { time: '14:32:05', type: 'test', message: 'body.length > 0 — passed', ok: true },
   { time: '14:32:05', type: 'log', message: 'found 3 users', ok: null },
-  { time: '14:30:12', type: 'request', message: 'POST https://api.example.com/users → 201 Created (310ms)', ok: true },
+  {
+    time: '14:30:12', type: 'request', message: 'POST https://api.example.com/users → 201 Created (310ms)', ok: true,
+    detail: {
+      request: { method: 'POST', url: 'https://api.example.com/users', headers: { 'Content-Type': 'application/json' } },
+      response: { status: 201, statusText: 'Created', duration: 310, headers: { 'content-type': 'application/json' }, body: '{"id":4,"name":"New User"}' },
+    },
+  },
   { time: '14:28:44', type: 'request', message: 'GET https://api.example.com/orders → 200 OK (98ms)', ok: true },
-  { time: '14:25:01', type: 'request', message: 'DELETE https://api.example.com/orders/5 → 404 Not Found (45ms)', ok: false },
+  {
+    time: '14:25:01', type: 'request', message: 'DELETE https://api.example.com/orders/5 → 404 Not Found (45ms)', ok: false,
+    detail: {
+      request: { method: 'DELETE', url: 'https://api.example.com/orders/5', headers: {} },
+      response: { status: 404, statusText: 'Not Found', duration: 45, headers: { 'content-type': 'application/json' }, body: '{"error":"order not found"}' },
+    },
+  },
   { time: '14:25:01', type: 'test', message: 'status == 200 — failed (expected: 200, got: 404)', ok: false },
   { time: '14:20:33', type: 'request', message: 'PUT https://api.example.com/users/3 → 500 Internal Server Error (1200ms)', ok: false },
 ];
@@ -393,6 +422,8 @@ function App() {
   const [activeEnvId, setActiveEnvId] = React.useState('env-1');
   const [history, setHistory] = React.useState(MOCK_HISTORY);
   const [consoleLogs, setConsoleLogs] = React.useState(MOCK_CONSOLE);
+  const [workspaces, setWorkspaces] = React.useState(MOCK_WORKSPACES);
+  const activeWorkspace = workspaces.find(w => w.isActive) || workspaces[0];
 
   // Request tabs
   const [tabs, setTabs] = React.useState([
@@ -574,6 +605,23 @@ function App() {
   }
 
   // Rename helpers — update name in collections state tree
+  function addFolder(collectionId, parentFolderId) {
+    const id = 'fld-' + Date.now();
+    const newFolder = { id, name: 'new folder', folders: [], requests: [] };
+    setCollections(prev => prev.map(c => {
+      if (c.id !== collectionId) return c;
+      if (!parentFolderId) return { ...c, folders: [...(c.folders || []), newFolder] };
+      function insertInto(folders) {
+        return folders.map(f =>
+          f.id === parentFolderId
+            ? { ...f, folders: [...(f.folders || []), newFolder] }
+            : { ...f, folders: insertInto(f.folders || []) }
+        );
+      }
+      return { ...c, folders: insertInto(c.folders) };
+    }));
+  }
+
   function renameCollection(colId, newName) {
     setCollections(prev => prev.map(c => c.id === colId ? { ...c, name: newName } : c));
   }
@@ -645,6 +693,8 @@ function App() {
         onEnvChange={setActiveEnvId}
         onNewAction={handleNewAction}
         onSearch={setSearchQuery}
+        activeWorkspaceName={activeWorkspace?.name}
+        onWorkspaceClick={() => setModalOpen('workspace')}
       />
 
       <div className="flex-1 flex min-h-0">
@@ -673,6 +723,7 @@ function App() {
             onRenameRequest={renameRequest}
             onClearHistory={() => setHistory([])}
             externalSearch={searchQuery}
+            onAddFolder={addFolder}
           />
         )}
 
@@ -694,6 +745,8 @@ function App() {
             saved={activeTab?.saved}
             onRename={newName => updateActiveTab({ name: newName })}
             onSave={handleSave}
+            splitDirection={splitDirection}
+            onSplitToggle={() => { setSplitDirection(d => d === 'horizontal' ? 'vertical' : 'horizontal'); setPaneSize(null); }}
           />
 
           {/* URL bar */}
@@ -712,26 +765,20 @@ function App() {
               <InputPane
                 tab={activeTab}
                 onUpdate={updateActiveTab}
+                environments={environments}
+                lastResponse={response}
               />
             </div>
 
-            {/* Drag divider with split toggle */}
+            {/* Drag divider */}
             <div
-              className={`flex-shrink-0 flex items-center justify-center ${
+              className={`flex-shrink-0 ${
                 splitDirection === 'horizontal'
-                  ? 'w-[5px] cursor-col-resize hover:bg-gray-200'
-                  : 'h-[5px] cursor-row-resize hover:bg-gray-200'
-              } bg-gray-100 transition-colors group relative`}
+                  ? 'w-[5px] cursor-col-resize hover:bg-gray-300'
+                  : 'h-[5px] cursor-row-resize hover:bg-gray-300'
+              } bg-gray-200 transition-colors`}
               onMouseDown={startDrag}
-            >
-              <button
-                onClick={(e) => { e.stopPropagation(); setSplitDirection(d => d === 'horizontal' ? 'vertical' : 'horizontal'); setPaneSize(null); }}
-                className="absolute z-10 p-0.5 bg-gray-100 border border-gray-200 rounded-sm text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
-                aria-label="toggle split direction"
-              >
-                <Icon name={splitDirection === 'horizontal' ? 'split-horizontal' : 'split-vertical'} size={12} className="" />
-              </button>
-            </div>
+            />
 
             <div style={outputStyle} className="min-h-0 min-w-0 flex flex-col overflow-hidden">
               <OutputPane response={response} />
@@ -763,6 +810,15 @@ function App() {
           editColId={modalData}
           onClose={() => setModalOpen(null)}
           onSave={cols => { setCollections(cols); setModalOpen(null); }}
+          environments={environments}
+          lastResponse={response}
+        />
+      )}
+      {modalOpen === 'workspace' && (
+        <WorkspaceModal
+          workspaces={workspaces}
+          onClose={() => setModalOpen(null)}
+          onSave={wsList => { setWorkspaces(wsList); setModalOpen(null); }}
         />
       )}
     </div>

@@ -125,7 +125,7 @@ function ImportSection({ onImported, selectedCol }) {
   );
 }
 
-window.CollectionModal = function CollectionModal({ collections, editColId, onClose, onSave }) {
+window.CollectionModal = function CollectionModal({ collections, editColId, onClose, onSave, environments, lastResponse }) {
   const isNew = !editColId;
   const [localCols, setLocalCols] = React.useState(() => JSON.parse(JSON.stringify(collections)));
   const [selectedColId, setSelectedColId] = React.useState(editColId || collections[0]?.id || null);
@@ -184,7 +184,7 @@ window.CollectionModal = function CollectionModal({ collections, editColId, onCl
     { value: 'none', label: 'no auth' },
     { value: 'bearer', label: 'bearer token' },
     { value: 'basic', label: 'basic auth' },
-    { value: 'apikey', label: 'api key' },
+    { value: 'api-key', label: 'api key' },
   ];
 
   return (
@@ -336,13 +336,13 @@ window.CollectionModal = function CollectionModal({ collections, editColId, onCl
                     </div>
                   </div>
                 )}
-                {selectedCol.authType === 'apikey' && (
+                {selectedCol.authType === 'api-key' && (
                   <div className="flex flex-col gap-3">
                     <div>
-                      <label className="text-xs text-gray-400 lowercase mb-1 block">header name</label>
+                      <label className="text-xs text-gray-400 lowercase mb-1 block">key name</label>
                       <input
-                        value={selectedCol.authData?.headerName || ''}
-                        onChange={e => updateCol('authData', { ...selectedCol.authData, headerName: e.target.value })}
+                        value={selectedCol.authData?.name || ''}
+                        onChange={e => updateCol('authData', { ...selectedCol.authData, name: e.target.value })}
                         placeholder="X-API-Key"
                         className="w-full border-b border-gray-300 py-2 text-sm text-gray-700 font-mono placeholder-gray-300 bg-transparent focus:outline-none focus:border-gray-500"
                       />
@@ -354,6 +354,18 @@ window.CollectionModal = function CollectionModal({ collections, editColId, onCl
                         onChange={e => updateCol('authData', { ...selectedCol.authData, value: e.target.value })}
                         placeholder="{{api_key}}"
                         className="w-full border-b border-gray-300 py-2 text-sm text-gray-700 font-mono placeholder-gray-300 bg-transparent focus:outline-none focus:border-gray-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-400 lowercase mb-1 block">add to</label>
+                      <Dropdown
+                        value={selectedCol.authData?.addTo || 'header'}
+                        onChange={v => updateCol('authData', { ...selectedCol.authData, addTo: v })}
+                        options={[
+                          { value: 'header', label: 'request header' },
+                          { value: 'query', label: 'query param' },
+                        ]}
+                        width="w-40"
                       />
                     </div>
                   </div>
@@ -369,7 +381,8 @@ window.CollectionModal = function CollectionModal({ collections, editColId, onCl
                   value={selectedCol.preRequestScript || ''}
                   onChange={v => updateCol('preRequestScript', v)}
                   placeholder={'# runs before each request\nset header X-Request-Id = uuid()'}
-                  environments={[]}
+                  environments={environments || []}
+                  lastResponse={lastResponse}
                 />
               </div>
             )}
@@ -382,7 +395,8 @@ window.CollectionModal = function CollectionModal({ collections, editColId, onCl
                   value={selectedCol.testScript || ''}
                   onChange={v => updateCol('testScript', v)}
                   placeholder={'# runs after each request\nstatus < 500\nduration < 5000'}
-                  environments={[]}
+                  environments={environments || []}
+                  lastResponse={lastResponse}
                 />
               </div>
             )}

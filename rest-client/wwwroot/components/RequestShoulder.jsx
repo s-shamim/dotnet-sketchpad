@@ -1,6 +1,6 @@
 // RequestShoulder.jsx — request name, breadcrumb, save button
 
-window.RequestShoulder = function RequestShoulder({ name, breadcrumb, saved, onRename, onSave }) {
+window.RequestShoulder = function RequestShoulder({ name, breadcrumb, saved, onRename, onSave, splitDirection, onSplitToggle }) {
   const [editing, setEditing] = React.useState(false);
   const [editName, setEditName] = React.useState('');
 
@@ -52,12 +52,22 @@ window.RequestShoulder = function RequestShoulder({ name, breadcrumb, saved, onR
           </span>
         )}
       </div>
-      <button
-        onClick={onSave}
-        className="text-xs text-gray-400 hover:text-gray-700 transition-colors lowercase flex-shrink-0"
-      >
-        {saved ? 'save' : 'save as'}
-      </button>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <button
+          onClick={onSplitToggle}
+          aria-label={splitDirection === 'horizontal' ? 'switch to vertical split' : 'switch to horizontal split'}
+          title={splitDirection === 'horizontal' ? 'vertical split' : 'horizontal split'}
+          className="p-1 text-gray-400 hover:text-gray-600 transition-colors rounded-sm"
+        >
+          <Icon name={splitDirection === 'horizontal' ? 'split-horizontal' : 'split-vertical'} size={14} className="" />
+        </button>
+        <button
+          onClick={onSave}
+          className="text-xs text-gray-400 hover:text-gray-700 transition-colors lowercase"
+        >
+          {saved ? 'save' : 'save as'}
+        </button>
+      </div>
     </div>
   );
 };

@@ -21,8 +21,9 @@
    - 5.7 [Script Autocomplete](#57-script-autocomplete)  
    - 5.8 [Console](#58-console)  
    - 5.9 [Settings & Preferences](#59-settings--preferences)  
-   - 5.10 [Collection Import & Base URL](#510-collection-import--base-url)  
-6. [API Endpoints](#api-endpoints)  
+   - 5.10 [Collection Import & Base URL](#510-collection-import--base-url)
+   - 5.11 [Workspaces](#511-workspaces)
+6. [API Endpoints](#api-endpoints)
 7. [Inheritance & Merge Rules](#inheritance--merge-rules)  
 8. [File Structure](#file-structure)  
 
@@ -215,7 +216,7 @@ Browser (React 18)                    Server (ASP.NET + EF Core + SQLite)
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│ [+ New ▾]  [Workspace ▾]     🔍 Search...      [env▾] ⚙ 🎨 🌙  │  TopBar
+│ ≡  [+ New ▾]  [Workspace ▾]     🔍 Search...      [env▾] 🎨 🌙  │  TopBar
 ├──┬─────────┬─────────────────────────────────────────────────────┤
 │📁│ COLLCTNS│ [Request 1 ×] [Request 2 ×] [+]                    │  RequestTabs
 │🌍│ 🔍 filtr│  My Request  ∙ coll/folder    [Save]               │  RequestShoulder
@@ -243,16 +244,16 @@ Browser (React 18)                    Server (ASP.NET + EF Core + SQLite)
 
 | Component | Position | Behavior |
 |---|---|---|
-| **TopBar** | Fixed top, full width | `[+ New ▾]` dropdown (collection/request/env), workspace selector, centered search, env selector, settings gear, theme dropdown, dark/light toggle |
+| **TopBar** | Fixed top, full width | sliders icon (settings), `[+ New ▾]` dropdown (new request/collection/env), workspace selector, centered search (flex-1), env selector, theme dropdown, dark/light toggle |
 | **ActivityBar** | Far left, `w-10`, full height | 3 icon buttons: 📁 collections, 🌍 environments, 📜 history. Active = left border accent. Click same icon = collapse panel |
 | **SidePanel** | Left of main, `w-60`, expandable | Content switches based on active panel. Has header with section name + close ×. Each section has own filter/actions |
 | **RequestTabs** | Top of main area | Browser-style tabs with method badge, name, unsaved dot, close ×, add + button |
-| **RequestShoulder** | Below tabs | Request name, breadcrumb (collection > folder), save/save-as button |
+| **RequestShoulder** | Below tabs | Request name (double-click to rename), breadcrumb (collection > folder), split direction toggle icon, save/save-as button |
 | **UrlBar** | Below shoulder | Method Dropdown + monospace URL input + Send button |
 | **InputPane** | Left (horizontal) or top (vertical) | 7 tabs: params, headers, body, auth, scripts, tests, settings |
 | **OutputPane** | Right (horizontal) or bottom (vertical) | Status bar + 3 tabs: body (pretty/raw), headers, test results |
 | **Split divider** | Between input/output | Draggable. Single icon toggles horizontal ↔ vertical |
-| **ConsolePanel** | Bottom of main area, collapsible | Log entries with status icons. `▲ console` tab when collapsed. Clear + close buttons |
+| **ConsolePanel** | Bottom of main area, collapsible | Drag handle on top border for height resize (min 80px, default 200px). Log entries with status icons. `▲ console` tab when collapsed. Clear + close buttons |
 | **EnvModal** | Modal overlay | Environment name + variable table (key/initial/current). Tab strip for multiple envs |
 | **CollectionModal** | Modal overlay | Collection name + tabs: settings, headers, auth, scripts, tests, import |
 
@@ -266,6 +267,8 @@ Browser (React 18)                    Server (ASP.NET + EF Core + SQLite)
 - `[✏ Edit]` button on env pane opens EnvModal for that environment
 - `[✏ Edit]` button on collection pane opens CollectionModal for that collection
 - Default split: **horizontal** (input left, output right)
+- Modals close only on explicit save, cancel, or ×-close actions — no backdrop click or Escape dismissal
+- Console height is resizable via a drag handle on its top border; drag up = expand, drag down = shrink; default 200px, min 80px
 
 ---
 
@@ -342,6 +345,16 @@ set env userId = jwt_payload(response.body.access_token).sub
 ```
 
 Scripts update `currentValue` in the database. Changes are returned to the UI in the response payload so the env pane reflects updates immediately.
+
+**Global Environment:**
+- One environment can be designated as **global** (`IsGlobal = true`)
+- Global env variables are the lowest-priority base layer — always merged before the active environment
+- Active environment variables **override** global ones on key conflict
+- The global env is **not selectable** via the TopBar env dropdown (it is always applied)
+- Marked with a `globe` icon in the EnvModal tab strip and SidePanel env list
+- Toggle `isGlobal` in the EnvModal to designate an env as global; only one can be global at a time
+- Merge order at execution: `global vars → active env vars` (active wins on conflict)
+- Useful for shared constants across all envs: API version, feature flags, shared base headers
 
 ### 5.4 History
 
@@ -675,6 +688,47 @@ Example entries:
 | `followRedirects` | bool | `true` |
 | `verifySsl` | bool | `false` |
 | `timeoutMs` | int | `30000` |
+
+---
+
+### 5.11 Workspaces
+
+A workspace is an isolated data container — each workspace has its own collections, environments, history, tabs, and preferences. Switching workspaces loads a completely different working context.
+
+**Rules:**
+- Only one workspace is active at a time (`IsActive = true`)
+- A `default` workspace is created on first run
+- All major entities are scoped to a workspace via `WorkspaceId int FK`: Collection, Environment, HistoryEntry, OpenTab, Preference
+- Switching workspaces is persisted to the database immediately
+
+**WorkspaceModal:**
+- Opened by clicking the `[Workspace ▾]` button in the TopBar
+- Lists all workspaces with an active-dot indicator
+- **Switch:** click a workspace row to activate it
+- **Rename:** pencil icon on hover → inline editor (Enter to confirm, Esc to cancel)
+- **Add:** `+ new workspace` button, opens inline editor for the new entry
+- **Delete:** × on hover → inline `delete / cancel` confirmation. Cannot delete if only one workspace remains.
+
+**Database additions:**
+
+| Table | New Column | Type | Notes |
+|---|---|---|---|
+| (new) Workspace | Id / Name / IsActive / CreatedAt | — | New table |
+| Collection | WorkspaceId | int FK | Scopes to workspace |
+| Environment | WorkspaceId | int FK | Scopes to workspace |
+| HistoryEntry | WorkspaceId | int FK | Scopes to workspace |
+| OpenTab | WorkspaceId | int FK | Scopes to workspace |
+| Preference | WorkspaceId | int FK | Scopes to workspace |
+
+**API Endpoints:**
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/workspaces` | List all workspaces |
+| POST | `/api/workspaces` | Create workspace |
+| PUT | `/api/workspaces/{id}` | Rename workspace |
+| DELETE | `/api/workspaces/{id}` | Delete workspace (fails if last remaining) |
+| PUT | `/api/workspaces/{id}/activate` | Switch active workspace |
 
 ---
 

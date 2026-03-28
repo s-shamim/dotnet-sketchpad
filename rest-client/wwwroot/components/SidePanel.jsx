@@ -3,7 +3,7 @@
 window.SidePanel = function SidePanel({
   activePanel, onClose, collections, environments, activeEnvId,
   onEnvActivate, history, onSelectRequest, onEditEnv, onEditCollection, onNewAction,
-  onRenameCollection, onRenameFolder, onRenameRequest, onClearHistory, externalSearch,
+  onRenameCollection, onRenameFolder, onRenameRequest, onClearHistory, externalSearch, onAddFolder,
 }) {
   const [localSearch, setLocalSearch] = React.useState('');
   const [openGroups, setOpenGroups] = React.useState({});
@@ -78,26 +78,37 @@ window.SidePanel = function SidePanel({
   }).filter(col => col.requests.length > 0 || col.folders.length > 0 || q === '');
 
   // Recursive folder renderer
-  function renderFolder(folder, depth) {
+  function renderFolder(folder, depth, colId) {
     const paddingLeft = 12 + depth * 16;
     return (
       <div key={folder.id}>
-        <button
-          onClick={() => toggleGroup(folder.id)}
-          onDoubleClick={e => startRename(folder.id, folder.name, e)}
-          style={{ paddingLeft }}
-          className="w-full text-left pr-3 py-1.5 text-[10px] tracking-wider text-gray-400 flex items-center gap-1.5 cursor-pointer bg-transparent border-0 hover:text-gray-600 transition-colors"
-        >
-          <Icon name="caret-right" size={10} className={`transition-transform flex-shrink-0 ${openGroups[folder.id] ? 'rotate-90' : ''}`} />
-          <Icon name="folder" size={12} className="text-gray-300 flex-shrink-0" />
-          {editingId === folder.id
-            ? <InlineEditor type="folder" />
-            : <span className="lowercase truncate">{folder.name}</span>
-          }
-        </button>
+        <div className="flex items-center group">
+          <button
+            onClick={() => toggleGroup(folder.id)}
+            onDoubleClick={e => startRename(folder.id, folder.name, e)}
+            style={{ paddingLeft }}
+            className="flex-1 text-left pr-3 py-1.5 text-[10px] tracking-wider text-gray-400 flex items-center gap-1.5 cursor-pointer bg-transparent border-0 hover:text-gray-600 transition-colors min-w-0"
+          >
+            <Icon name="caret-right" size={10} className={`transition-transform flex-shrink-0 ${openGroups[folder.id] ? 'rotate-90' : ''}`} />
+            <Icon name="folder" size={12} className="text-gray-300 flex-shrink-0" />
+            {editingId === folder.id
+              ? <InlineEditor type="folder" />
+              : <span className="lowercase truncate">{folder.name}</span>
+            }
+          </button>
+          {onAddFolder && (
+            <button
+              onClick={e => { e.stopPropagation(); toggleGroup(folder.id); onAddFolder(colId, folder.id); }}
+              className="mr-2 text-gray-300 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+              aria-label={`add folder inside ${folder.name}`}
+            >
+              <Icon name="folder-plus" size={12} />
+            </button>
+          )}
+        </div>
         {openGroups[folder.id] && (
           <>
-            {folder.folders.map(sub => renderFolder(sub, depth + 1))}
+            {folder.folders.map(sub => renderFolder(sub, depth + 1, colId))}
             {folder.requests.map(req => renderRequest(req, depth + 1))}
           </>
         )}
@@ -172,15 +183,24 @@ window.SidePanel = function SidePanel({
                 </button>
                 <button
                   onClick={() => onEditCollection(col.id)}
-                  className="mr-2 text-gray-300 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="mr-1 text-gray-300 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
                   aria-label={`edit ${col.name}`}
                 >
                   <Icon name="gear-six" size={12} />
                 </button>
+                {onAddFolder && (
+                  <button
+                    onClick={e => { e.stopPropagation(); toggleGroup(col.id); onAddFolder(col.id, null); }}
+                    className="mr-2 text-gray-300 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label={`add folder to ${col.name}`}
+                  >
+                    <Icon name="folder-plus" size={12} />
+                  </button>
+                )}
               </div>
               {openGroups[col.id] && (
                 <>
-                  {col.folders.map(folder => renderFolder(folder, 1))}
+                  {col.folders.map(folder => renderFolder(folder, 1, col.id))}
                   {col.requests.map(req => renderRequest(req, 1))}
                 </>
               )}
@@ -205,11 +225,16 @@ window.SidePanel = function SidePanel({
           {environments.map(env => (
             <div key={env.id} className="px-3 py-2 border-b border-gray-100 flex items-center justify-between hover:bg-gray-100 transition-colors">
               <button
-                onClick={() => onEnvActivate(env.id)}
-                className={`text-xs bg-transparent border-0 cursor-pointer p-0 lowercase transition-colors ${
-                  env.id === activeEnvId ? 'text-gray-900 font-medium' : 'text-gray-500 hover:text-gray-900'
+                onClick={() => !env.isGlobal && onEnvActivate(env.id)}
+                className={`text-xs bg-transparent border-0 lowercase transition-colors flex items-center gap-1.5 ${
+                  env.isGlobal
+                    ? 'text-gray-400 cursor-default'
+                    : env.id === activeEnvId
+                      ? 'text-gray-900 font-medium cursor-pointer'
+                      : 'text-gray-500 hover:text-gray-900 cursor-pointer'
                 }`}
               >
+                {env.isGlobal && <Icon name="globe-simple" size={11} className="text-gray-300 flex-shrink-0" />}
                 {env.name}
               </button>
               <div className="flex items-center gap-2">
@@ -219,7 +244,10 @@ window.SidePanel = function SidePanel({
                 >
                   edit
                 </button>
-                <span className={`w-1.5 h-1.5 rounded-full ${env.id === activeEnvId ? 'bg-gray-500' : 'bg-gray-200'}`} />
+                {env.isGlobal
+                  ? <span className="text-[9px] text-gray-300 lowercase">global</span>
+                  : <span className={`w-1.5 h-1.5 rounded-full ${env.id === activeEnvId ? 'bg-gray-500' : 'bg-gray-200'}`} />
+                }
               </div>
             </div>
           ))}

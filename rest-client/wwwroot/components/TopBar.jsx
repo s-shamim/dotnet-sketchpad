@@ -1,6 +1,6 @@
 // TopBar.jsx — top shoulder: [+ New ▾], workspace, centered search, env selector, settings, theme, dark/light toggle
 
-window.TopBar = function TopBar({ theme, onThemeChange, mode, onModeChange, activeEnvId, environments, onEnvChange, onNewAction, onSearch }) {
+window.TopBar = function TopBar({ theme, onThemeChange, mode, onModeChange, activeEnvId, environments, onEnvChange, onNewAction, onSearch, activeWorkspaceName, onWorkspaceClick }) {
   const [search, setSearch] = React.useState('');
   const [newOpen, setNewOpen] = React.useState(false);
   const newRef = React.useRef(null);
@@ -19,7 +19,7 @@ window.TopBar = function TopBar({ theme, onThemeChange, mode, onModeChange, acti
     { value: 'environment', label: 'new environment' },
   ];
 
-  const envOptions = environments.map(e => ({ value: e.id, label: e.name }));
+  const envOptions = environments.filter(e => !e.isGlobal).map(e => ({ value: e.id, label: e.name }));
 
   return (
     <div className="flex items-center gap-3 px-3 py-2 border-b border-gray-200 bg-white flex-shrink-0">
@@ -53,12 +53,13 @@ window.TopBar = function TopBar({ theme, onThemeChange, mode, onModeChange, acti
       </div>
 
       {/* Workspace */}
-      <Dropdown
-        value="default"
-        onChange={() => {}}
-        options={[{ value: 'default', label: 'workspace' }]}
-        width="w-28"
-      />
+      <button
+        onClick={onWorkspaceClick}
+        className="flex items-center gap-1.5 text-sm text-gray-500 border border-gray-200 px-3 py-1.5 rounded-sm hover:border-gray-300 hover:bg-gray-50 transition-colors lowercase flex-shrink-0"
+      >
+        <span className="truncate max-w-[80px]">{activeWorkspaceName || 'workspace'}</span>
+        <Icon name="caret-down" size={11} className="text-gray-400" />
+      </button>
 
       {/* Centered search */}
       <div className="flex-1 flex justify-center">
