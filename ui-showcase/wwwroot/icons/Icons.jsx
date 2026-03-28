@@ -1,7 +1,8 @@
 function IconsSection() {
   const icons = [
     'house', 'gear', 'bell', 'user', 'magnifying-glass', 'x', 'check', 'plus',
-    'minus', 'arrow-left', 'arrow-right', 'arrow-up', 'arrow-down', 'caret-down',
+    'minus', 'arrow-left', 'arrow-right', 'arrow-up', 'arrow-down',
+    'caret-down', 'caret-up', 'caret-left', 'caret-right',
     'copy', 'clipboard', 'pencil', 'trash', 'floppy-disk', 'upload', 'download',
     'eye', 'eye-slash', 'lock', 'lock-open', 'key', 'shield', 'warning',
     'info', 'question', 'check-circle', 'x-circle', 'dots-three-outline',
@@ -10,8 +11,9 @@ function IconsSection() {
     'code', 'terminal', 'database', 'cloud', 'wifi', 'link', 'globe',
     'envelope', 'chat', 'phone', 'map-pin', 'calendar', 'clock',
     'chart-line', 'chart-bar', 'chart-pie', 'trend-up', 'trend-down',
-    'arrow-clockwise', 'arrow-counter-clockwise', 'funnel', 'sort-ascending',
+    'arrow-clockwise', 'arrow-counter-clockwise', 'funnel', 'sort-ascending', 'sort-descending',
     'star', 'heart', 'bookmark', 'tag', 'flag',
+    'shuffle', 'dots-six-vertical', 'credit-card',
   ];
 
   return (

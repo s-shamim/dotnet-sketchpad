@@ -6,7 +6,15 @@ applyTo: "**/*.jsx,**/index.html"
 
 > Full implementation detail for every component in this design system.
 > All code comes verbatim from `ui-showcase/wwwroot/` — the canonical living reference.
-> See [ui.instructions.md](ui.instructions.md) for the lean index and conventions.
+> See [ui.instructions.md](ui.instructions.md) for the thin policy/index doc.
+
+---
+
+## How To Use This Split
+
+- Use [ui.instructions.md](ui.instructions.md) for policy-level rules: app defaults, file placement, theme-selector default, and high-signal design constraints.
+- Use this file for exact implementation details: JSX structure, prop contracts, ARIA, interaction behavior, and copyable examples.
+- When these docs differ in scope, treat `ui-showcase/wwwroot/` as the canonical implementation source.
 
 ---
 
@@ -131,7 +139,7 @@ Split into `shared.jsx`, section files, and `app.jsx`. Load order is critical �
 wwwroot/
   index.html      ← loads all JSX in correct order
   themes.css
-  shared.jsx      ← Toggle, SidebarNav, Spinner (cross-section primitives)
+  shared.jsx      ← Toggle, SidebarNav, Spinner, SearchInput (cross-section primitives)
   app.jsx         ← Icon, SectionTitle, DemoBlock, Dropdown, SECTIONS, App + createRoot
   forms/
     Forms.jsx
@@ -144,6 +152,7 @@ wwwroot/
 - `Toggle` is used by the app shell AND FormsSection
 - `SidebarNav` is used by the app shell AND NavigationSection
 - `Spinner` is used by ButtonsSection AND FeedbackSection
+- `SearchInput` is used by FormsSection AND DataSection
 - Anything used across 2+ sections goes in `shared.jsx`, not `app.jsx`
 
 **`app.jsx` owns:** `Icon`, `SectionTitle`, `DemoBlock`, `Dropdown`, `SECTIONS` registry, `App` component, `ReactDOM.createRoot` mount.
@@ -153,6 +162,9 @@ wwwroot/
 ## App Shell — Theme + Dark Mode (Required in Every App)
 
 Every app must include a theme changer and dark mode toggle. This is the canonical pattern from `app.jsx`:
+
+For new apps, the default selector should expose the standard 4 themes: `zinc`, `arctic`, `stone`, `hc`.
+The `ui-showcase` app may expose all 16 themes because it is demonstrating the full catalog rather than defining the default selector size for every generated app.
 
 ```jsx
 function App() {
@@ -201,6 +213,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 
 For simpler single-page apps without a sidebar, place the Dropdown + Toggle in a top bar or a settings corner rather than a full sidebar, but always include both.
 
+The sidebar shell shown above is the canonical pattern for multi-section showcase-style apps.
+
 ---
 
 ## App Shell Primitives (defined in `app.jsx`)
@@ -221,7 +235,7 @@ function Icon({ name, size = 14, className = "text-gray-400" }) {
 - Weight: `ph-light` only — never `ph-bold` or `ph-fill`
 - Browse names at phosphoricons.com
 
-Common icon names: `house`, `gear`, `bell`, `user`, `magnifying-glass`, `x`, `check`, `plus`, `minus`, `arrow-left`, `arrow-right`, `arrow-up`, `arrow-down`, `caret-down`, `caret-up`, `caret-left`, `caret-right`, `copy`, `clipboard`, `pencil`, `trash`, `floppy-disk`, `upload`, `download`, `eye`, `eye-slash`, `lock`, `lock-open`, `key`, `shield`, `warning`, `info`, `question`, `check-circle`, `x-circle`, `dots-three-outline`, `list`, `grid-four`, `rows`, `sidebar`, `folder`, `file`, `file-text`, `image`, `video`, `code`, `terminal`, `database`, `cloud`, `wifi`, `link`, `globe`, `envelope`, `chat`, `phone`, `map-pin`, `calendar`, `clock`, `chart-bar`, `chart-line`, `trend-up`, `trend-down`, `arrow-clockwise`, `arrow-counter-clockwise`, `funnel`, `sort-ascending`, `sort-descending`, `star`, `heart`, `bookmark`, `tag`, `flag`, `shuffle`, `dots-six-vertical`, `credit-card`
+Common icon names: `house`, `gear`, `bell`, `user`, `magnifying-glass`, `x`, `check`, `plus`, `minus`, `arrow-left`, `arrow-right`, `arrow-up`, `arrow-down`, `caret-down`, `caret-up`, `caret-left`, `caret-right`, `copy`, `clipboard`, `pencil`, `trash`, `floppy-disk`, `upload`, `download`, `eye`, `eye-slash`, `lock`, `lock-open`, `key`, `shield`, `warning`, `info`, `question`, `check-circle`, `x-circle`, `dots-three-outline`, `list`, `grid-four`, `rows`, `sidebar`, `folder`, `file`, `file-text`, `image`, `video`, `code`, `terminal`, `database`, `cloud`, `wifi`, `link`, `globe`, `envelope`, `chat`, `phone`, `map-pin`, `calendar`, `clock`, `chart-bar`, `chart-line`, `chart-pie`, `trend-up`, `trend-down`, `arrow-clockwise`, `arrow-counter-clockwise`, `funnel`, `sort-ascending`, `sort-descending`, `star`, `heart`, `bookmark`, `tag`, `flag`, `shuffle`, `dots-six-vertical`, `credit-card`
 
 ### SectionTitle
 
@@ -312,7 +326,7 @@ Options can be strings `['a', 'b']` or objects `[{ value: 'a', label: 'Option A'
 
 ### Toggle / Switch
 
-> Outer element is `<div>` not `<label>` — `<label>` wrapping `<button>` breaks click propagation in some browsers.
+> Outer element is `<div>` not `<label>` — `<label>` wrapping `<button>` breaks click propagation in some browsers. This rule applies **only** to controls containing a `<button>`. `Checkbox` and `RadioGroup` correctly use `<label>` because they wrap native `<input>` elements.
 
 ```jsx
 function Toggle({ checked, onChange, label }) {
@@ -399,6 +413,32 @@ function Spinner({ size = 16 }) {
 }
 ```
 
+### SearchInput
+
+```jsx
+function SearchInput({ value, onChange, placeholder = 'search...', width = 'w-full' }) {
+  return (
+    <div className={`relative flex items-center ${width}`}>
+      <Icon name="magnifying-glass" size={14} className="absolute left-0 text-gray-300 pointer-events-none" />
+      <input
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full border-b border-gray-300 py-2 pl-5 text-sm text-gray-700 placeholder-gray-300 bg-transparent focus:outline-none focus:border-gray-500"
+      />
+      {value && (
+        <button
+          onClick={() => onChange('')}
+          className="absolute right-0 text-gray-300 hover:text-gray-500 transition-colors flex items-center"
+        >
+          <Icon name="x" size={12} className="" />
+        </button>
+      )}
+    </div>
+  );
+}
+```
+
 ---
 
 ## Typography
@@ -419,9 +459,19 @@ function Spinner({ size = 16 }) {
 **Weights:**
 - `font-light` (300) — section titles, `text-2xl`+
 - `font-normal` (400) — body text (default — no class needed)
-- `font-medium` (500) — active sidebar nav item ONLY
+- `font-medium` (500) — active sidebar nav item ONLY (always paired with `bg-gray-200` background)
 
-**Gray scale:** `text-gray-900` (headings) → `text-gray-700` (body) → `text-gray-500` (secondary) → `text-gray-400` (muted/labels) → `text-gray-300` (placeholders/disabled)
+**Gray scale tones:**
+
+| Class | Typical use |
+|---|---|
+| `text-gray-900` | Highest contrast — primary content, data values |
+| `text-gray-800` | Headings, section titles |
+| `text-gray-700` | Body text, labels |
+| `text-gray-600` | Secondary text, descriptions |
+| `text-gray-500` | Tertiary, captions |
+| `text-gray-400` | Placeholders, hints, icons |
+| `text-gray-300` | Disabled text, very muted |
 
 **Monospace:** `font-mono` for code, IDs, HTTP methods, response codes.
 
@@ -458,6 +508,9 @@ function Spinner({ size = 16 }) {
 
 {/* destructive */}
 <button className="text-sm text-red-400 border border-red-200 px-3 py-1.5 rounded-sm hover:border-red-400 hover:text-red-600 transition-colors lowercase">destructive</button>
+
+{/* info */}
+<button className="text-sm text-blue-600 border border-blue-200 px-3 py-1.5 rounded-sm hover:border-blue-400 transition-colors lowercase">info</button>
 ```
 
 ### Sizes
@@ -614,35 +667,9 @@ function RadioGroup({ options, value, onChange, name }) {
 }
 ```
 
-### SearchInput
-
-```jsx
-function SearchInput({ value, onChange, placeholder = 'search...', width = 'w-full' }) {
-  return (
-    <div className={`relative flex items-center ${width}`}>
-      <Icon name="magnifying-glass" size={14} className="absolute left-0 text-gray-300 pointer-events-none" />
-      <input
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full border-b border-gray-300 py-2 pl-5 text-sm text-gray-700 placeholder-gray-300 bg-transparent focus:outline-none focus:border-gray-500"
-      />
-      {value && (
-        <button
-          onClick={() => onChange('')}
-          className="absolute right-0 text-gray-300 hover:text-gray-500 transition-colors flex items-center"
-        >
-          <Icon name="x" size={12} className="" />
-        </button>
-      )}
-    </div>
-  );
-}
-```
-
 ### DatePicker
 
-Full calendar — not a native `<input type="date">`.
+Full calendar — not a native `<input type="date">`. Selected day uses `bg-gray-700 text-white` — a permitted exception to the no-filled-backgrounds rule for data-selection states.
 
 ```jsx
 function DatePicker({ value, onChange }) {
@@ -735,7 +762,7 @@ function DatePicker({ value, onChange }) {
 
 ### Key-Value Pair Editor (KVEditor)
 
-Pairs must use a stable `id` field, not array index, for React key correctness.
+Pairs must use a stable `id` field, not array index, for React key correctness. Inputs use `border-gray-200 / focus:border-gray-400` — intentionally lighter than standard text inputs (`border-gray-300 / focus:border-gray-500`) to give pair rows a recessed appearance.
 
 ```jsx
 function KVEditor({ pairs, onChange }) {
@@ -897,6 +924,8 @@ function Badge({ label, variant = 'neutral' }) {
 
 Usage: `<Badge label="200 OK" variant="success" />` `<Badge label="GET" variant="get" />`
 
+> `patch` uses `text-purple-600 bg-purple-50` — permitted exception to the gray-only color rule, specifically for HTTP PATCH method identification.
+
 ### Alert / Banner
 
 ```jsx
@@ -992,7 +1021,7 @@ function Skeleton({ lines = 3 }) {
 
 ### Modal / Dialog
 
-Focus trap, Tab cycling, Esc close, backdrop click close. `size` prop: `'md'` (default) or `'lg'`.
+Focus trap, Tab cycling, Esc close, backdrop click close. `size` prop: `'md'` (default) or `'lg'`. Title renders as `text-sm tracking-widest text-gray-700 uppercase` (section-label style, not a heading).
 
 ```jsx
 function Modal({ title, children, onClose, actions, size = 'md' }) {
@@ -1097,7 +1126,7 @@ function Tooltip({ text, children }) {
 
 ### Drawer
 
-Right-side panel. Same focus trap + Esc behavior as Modal.
+Right-side panel, fixed `w-80` width. Same focus trap + Esc behavior as Modal. Title uses the same `text-sm tracking-widest text-gray-700 uppercase` styling as Modal.
 
 ```jsx
 function Drawer({ title, children, onClose }) {
@@ -1238,8 +1267,8 @@ function DataTable({ columns, rows }) {
 
   const sorted = sortKey
     ? [...rows].sort((a, b) => {
-        const r = String(a[sortKey]).localeCompare(String(b[sortKey]), undefined, { numeric: true });
-        return sortDir === 'asc' ? r : -r;
+        const cmp = String(a[sortKey] ?? '').localeCompare(String(b[sortKey] ?? ''), undefined, { numeric: true, sensitivity: 'base' });
+        return sortDir === 'asc' ? cmp : -cmp;
       })
     : rows;
 
@@ -1247,15 +1276,15 @@ function DataTable({ columns, rows }) {
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-gray-100">
+          <tr className="border-b border-gray-200">
             {columns.map(col => (
-              <th key={col.key} className="text-left pb-2 pr-4 font-normal">
+              <th key={col.key} className="text-left py-2 pr-4 font-normal">
                 <button
                   onClick={() => handleSort(col.key)}
-                  className="flex items-center gap-1 text-xs tracking-wide text-gray-400 hover:text-gray-600 transition-colors lowercase group"
+                  className="flex items-center gap-1 text-xs tracking-widest text-gray-400 uppercase hover:text-gray-600 transition-colors group"
                 >
                   {col.label}
-                  <span className={`transition-opacity ${sortKey === col.key ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`}>
+                  <span className={`transition-opacity ${sortKey === col.key ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'}`}>
                     <Icon name={sortKey === col.key && sortDir === 'desc' ? 'sort-descending' : 'sort-ascending'} size={11} className="" />
                   </span>
                 </button>
@@ -1360,7 +1389,7 @@ function Pagination({ page, totalPages, onChange }) {
 
 ### FilterModal (advanced table filtering)
 
-Builds conditions `{ id, connector, field, operator, value }`. Renders inside a `Modal` (size `'lg'`).
+Builds conditions `{ id, connector, field, operator, value }`. Renders inside a `Modal` (size `'lg'`). Keep `applyConditions` and `checkCond` outside the component, in the same section file.
 
 ```jsx
 function FilterModal({ columns, conditions, onApply, onClose }) {
@@ -1428,7 +1457,7 @@ function FilterModal({ columns, conditions, onApply, onClose }) {
   );
 }
 
-// Filter logic (place outside component)
+// Filter logic (place outside component, in the same section file)
 function applyConditions(rows, conditions) {
   if (!conditions.length) return rows;
   return rows.filter(row => {
@@ -2050,8 +2079,8 @@ React.useEffect(() => {
 | `--gray-50` … `--gray-900` | Full gray scale — remapped per theme |
 | `--color-white` | Surface backgrounds (dark mode maps to a dark tone) |
 | `--toggle-thumb` | Toggle thumb color — always use this, never `bg-white` |
-| `--overlay-bg` | Tooltip/overlay background (`var(--gray-900)`) |
-| `--overlay-text` | Tooltip/overlay text (`var(--gray-50)`) |
+| `--overlay-bg` | Tooltip/overlay background — defined at `:root` scope (global, not per-theme), always `var(--gray-900)` |
+| `--overlay-text` | Tooltip/overlay text — defined at `:root` scope (global, not per-theme), always `var(--gray-50)` |
 | `--accent` | Theme accent (darkest meaningful tone) |
 | `--accent-fg` | Foreground on accent background |
 
@@ -2065,6 +2094,8 @@ Use these 4 themes as the default options in new app theme selectors:
 | `arctic` | arctic | Icy saturated blue |
 | `stone` | stone | Warm taupe |
 | `hc` | contrast | Maximum separation |
+
+`ui-showcase` may expose all 16 themes in its demo selector so the catalog is visible in one place. Generated apps should still start with the standard 4 unless the user asks for more.
 
 ### Full Theme Catalog (all 16)
 

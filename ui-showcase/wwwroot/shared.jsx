@@ -2,10 +2,11 @@
 // Shared components — loaded before all section files so
 // every section and the app shell can reference them as globals.
 //
-// Three primitives live here because they cross section boundaries:
-//   Toggle    — used by app.jsx shell (dark mode) AND FormsSection
-//   SidebarNav — used by app.jsx shell AND NavigationSection
-//   Spinner   — used by FeedbackSection AND ButtonsSection
+// Four primitives live here because they cross section boundaries:
+//   Toggle      — used by app.jsx shell (dark mode) AND FormsSection
+//   SidebarNav  — used by app.jsx shell AND NavigationSection
+//   Spinner     — used by FeedbackSection AND ButtonsSection
+//   SearchInput — used by FormsSection AND DataSection
 // ─────────────────────────────────────────────────────────
 
 // ── Toggle / Switch ────────────────────────────────────────
@@ -86,5 +87,29 @@ function Spinner({ size = 16 }) {
       style={{ width: size, height: size }}
       className="inline-block border-2 border-gray-200 border-t-gray-500 rounded-full animate-spin"
     />
+  );
+}
+
+// ── SearchInput ────────────────────────────────────────────
+
+function SearchInput({ value, onChange, placeholder = 'search...', width = 'w-full' }) {
+  return (
+    <div className={`relative flex items-center ${width}`}>
+      <Icon name="magnifying-glass" size={14} className="absolute left-0 text-gray-300 pointer-events-none" />
+      <input
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full border-b border-gray-300 py-2 pl-5 text-sm text-gray-700 placeholder-gray-300 bg-transparent focus:outline-none focus:border-gray-500"
+      />
+      {value && (
+        <button
+          onClick={() => onChange('')}
+          className="absolute right-0 text-gray-300 hover:text-gray-500 transition-colors flex items-center"
+        >
+          <Icon name="x" size={12} className="" />
+        </button>
+      )}
+    </div>
   );
 }
