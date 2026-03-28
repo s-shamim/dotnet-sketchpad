@@ -1,6 +1,6 @@
 // TopBar.jsx — top shoulder: [+ New ▾], workspace, centered search, env selector, settings, theme, dark/light toggle
 
-window.TopBar = function TopBar({ theme, onThemeChange, mode, onModeChange, activeEnvId, environments, onEnvChange, onNewAction }) {
+window.TopBar = function TopBar({ theme, onThemeChange, mode, onModeChange, activeEnvId, environments, onEnvChange, onNewAction, onSearch }) {
   const [search, setSearch] = React.useState('');
   const [newOpen, setNewOpen] = React.useState(false);
   const newRef = React.useRef(null);
@@ -23,14 +23,19 @@ window.TopBar = function TopBar({ theme, onThemeChange, mode, onModeChange, acti
 
   return (
     <div className="flex items-center gap-3 px-3 py-2 border-b border-gray-200 bg-white flex-shrink-0">
+      {/* Settings */}
+      <button aria-label="settings" className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors rounded-sm flex-shrink-0">
+        <Icon name="sliders-horizontal" size={16} className="" />
+      </button>
+
       {/* + New dropdown */}
-      <div className="relative" ref={newRef}>
+      <div className="relative flex-shrink-0" ref={newRef}>
         <button
           onClick={() => setNewOpen(o => !o)}
-          className="flex items-center gap-1 text-xs text-gray-600 border border-gray-200 px-2.5 py-1.5 rounded-sm hover:border-gray-300 hover:bg-gray-50 transition-colors lowercase"
+          className="flex items-center gap-1 text-sm text-gray-600 border border-gray-200 px-3 py-1.5 rounded-sm hover:border-gray-300 hover:bg-gray-50 transition-colors lowercase"
         >
-          <Icon name="plus" size={12} className="" /> new
-          <Icon name="caret-down" size={10} className="text-gray-400 ml-0.5" />
+          <Icon name="plus" size={13} className="" /> new
+          <Icon name="caret-down" size={11} className="text-gray-400 ml-0.5" />
         </button>
         {newOpen && (
           <div className="absolute top-full left-0 mt-1 w-40 border border-gray-200 bg-white shadow-sm rounded-sm z-30">
@@ -61,13 +66,13 @@ window.TopBar = function TopBar({ theme, onThemeChange, mode, onModeChange, acti
           <Icon name="magnifying-glass" size={14} className="absolute left-2 text-gray-300 pointer-events-none" />
           <input
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => { setSearch(e.target.value); onSearch && onSearch(e.target.value); }}
             placeholder="search requests..."
             className="w-full border border-gray-200 rounded-sm py-1.5 pl-7 pr-3 text-sm text-gray-700 placeholder-gray-300 bg-transparent focus:outline-none focus-visible:ring-1 focus-visible:ring-gray-400 focus-visible:border-gray-300"
           />
           {search && (
             <button
-              onClick={() => setSearch('')}
+              onClick={() => { setSearch(''); onSearch && onSearch(''); }}
               className="absolute right-2 text-gray-300 hover:text-gray-500 transition-colors flex items-center"
             >
               <Icon name="x" size={12} className="" />
@@ -85,11 +90,6 @@ window.TopBar = function TopBar({ theme, onThemeChange, mode, onModeChange, acti
         width="w-36"
       />
 
-      {/* Settings */}
-      <button aria-label="settings" className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors rounded-sm">
-        <Icon name="gear" size={16} className="" />
-      </button>
-
       {/* Theme */}
       <Dropdown
         value={theme}
@@ -104,11 +104,13 @@ window.TopBar = function TopBar({ theme, onThemeChange, mode, onModeChange, acti
       />
 
       {/* Dark/light toggle */}
-      <Toggle
-        checked={mode === 'dark'}
-        onChange={v => onModeChange(v ? 'dark' : 'light')}
-        label=""
-      />
+      <button
+        onClick={() => onModeChange(mode === 'dark' ? 'light' : 'dark')}
+        aria-label={mode === 'dark' ? 'switch to light mode' : 'switch to dark mode'}
+        className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors rounded-sm"
+      >
+        <Icon name={mode === 'dark' ? 'sun' : 'moon'} size={16} className="" />
+      </button>
     </div>
   );
 };

@@ -21,7 +21,7 @@ window.EnvModal = function EnvModal({ environments, editEnvId, onClose, onSave }
     setLocalEnvs(prev => prev.map(env =>
       env.id !== selectedEnvId ? env : {
         ...env,
-        variables: [...env.variables, { id: nextVarId.current, key: '', initialValue: '', currentValue: '' }],
+        variables: [...env.variables, { id: nextVarId.current, key: '', initialValue: '', currentValue: '', enabled: true }],
       }
     ));
   }
@@ -98,6 +98,7 @@ window.EnvModal = function EnvModal({ environments, editEnvId, onClose, onSave }
           {/* Variables table */}
           <div className="mb-2">
             <div className="flex gap-2 mb-2 text-[10px] text-gray-400 uppercase tracking-widest">
+              <span className="w-4 flex-shrink-0" />
               <span className="flex-1">variable</span>
               <span className="flex-1">initial value</span>
               <span className="flex-1">current value</span>
@@ -107,22 +108,35 @@ window.EnvModal = function EnvModal({ environments, editEnvId, onClose, onSave }
               {selectedEnv.variables.map(v => (
                 <div key={v.id} className="flex items-center gap-2 py-1.5 group">
                   <input
+                    type="checkbox"
+                    checked={v.enabled !== false}
+                    onChange={e => updateVar(v.id, 'enabled', e.target.checked)}
+                    className="accent-gray-400 w-3.5 h-3.5 cursor-pointer flex-shrink-0"
+                    title="enabled"
+                  />
+                  <input
                     value={v.key}
                     onChange={e => updateVar(v.id, 'key', e.target.value)}
                     placeholder="key"
-                    className="flex-1 border-b border-gray-200 py-1 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:border-gray-400 bg-transparent font-mono"
+                    className={`flex-1 border-b border-gray-200 py-1 text-sm placeholder-gray-300 focus:outline-none focus:border-gray-400 bg-transparent font-mono ${
+                      v.enabled === false ? 'text-gray-300 line-through' : 'text-gray-700'
+                    }`}
                   />
                   <input
                     value={v.initialValue}
                     onChange={e => updateVar(v.id, 'initialValue', e.target.value)}
                     placeholder="initial"
-                    className="flex-1 border-b border-gray-200 py-1 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:border-gray-400 bg-transparent font-mono"
+                    className={`flex-1 border-b border-gray-200 py-1 text-sm placeholder-gray-300 focus:outline-none focus:border-gray-400 bg-transparent font-mono ${
+                      v.enabled === false ? 'text-gray-300' : 'text-gray-700'
+                    }`}
                   />
                   <input
                     value={v.currentValue}
                     onChange={e => updateVar(v.id, 'currentValue', e.target.value)}
                     placeholder="current"
-                    className="flex-1 border-b border-gray-200 py-1 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:border-gray-400 bg-transparent font-mono"
+                    className={`flex-1 border-b border-gray-200 py-1 text-sm placeholder-gray-300 focus:outline-none focus:border-gray-400 bg-transparent font-mono ${
+                      v.enabled === false ? 'text-gray-300' : 'text-gray-700'
+                    }`}
                   />
                   <button
                     onClick={() => removeVar(v.id)}

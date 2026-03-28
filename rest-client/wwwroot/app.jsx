@@ -69,7 +69,7 @@ function Toggle({ checked, onChange, label }) {
         aria-checked={checked}
         tabIndex={0}
         onKeyDown={handleKeyDown}
-        onClick={e => e.stopPropagation()}
+        onClick={e => { e.stopPropagation(); onChange(!checked); }}
         className={`relative w-8 h-4 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-400 focus-visible:ring-offset-1 ${
           checked ? 'bg-gray-600' : 'bg-gray-200'
         }`}
@@ -109,7 +109,7 @@ function Badge({ label, variant = 'neutral' }) {
 function Modal({ title, children, onClose, actions, size = 'md' }) {
   const dialogRef = React.useRef(null);
   const titleId = React.useId();
-  const maxW = size === 'lg' ? 'max-w-xl' : 'max-w-md';
+  const maxW = size === 'lg' ? 'max-w-3xl' : 'max-w-lg';
 
   React.useEffect(() => {
     const el = dialogRef.current;
@@ -138,7 +138,7 @@ function Modal({ title, children, onClose, actions, size = 'md' }) {
         aria-modal="true"
         aria-labelledby={titleId}
         className={`bg-white border border-gray-200 rounded-sm shadow-sm ${maxW} w-full flex flex-col`}
-        style={{ maxHeight: '80vh' }}
+        style={{ maxHeight: '88vh' }}
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 flex-shrink-0">
@@ -147,7 +147,7 @@ function Modal({ title, children, onClose, actions, size = 'md' }) {
             <Icon name="x" size={14} className="" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
+        <div className="flex-1 overflow-y-auto px-5 py-4" style={size === 'lg' ? { minHeight: '400px' } : undefined}>{children}</div>
         {actions && (
           <div className="flex items-center justify-end gap-3 px-5 py-3 border-t border-gray-100 flex-shrink-0">
             {actions}
@@ -234,6 +234,7 @@ const MOCK_COLLECTIONS = [
   {
     id: 'col-1', name: 'user api',
     description: 'user management endpoints',
+    baseUrl: 'https://api.example.com',
     headers: [{ id: 1, key: 'Accept', value: 'application/json', enabled: true }],
     authType: 'bearer', authData: { token: '{{api_key}}' },
     preRequestScript: 'set header X-Request-Id = uuid()',
@@ -390,7 +391,7 @@ function App() {
   const [collections, setCollections] = React.useState(MOCK_COLLECTIONS);
   const [environments, setEnvironments] = React.useState(MOCK_ENVIRONMENTS);
   const [activeEnvId, setActiveEnvId] = React.useState('env-1');
-  const [history] = React.useState(MOCK_HISTORY);
+  const [history, setHistory] = React.useState(MOCK_HISTORY);
   const [consoleLogs, setConsoleLogs] = React.useState(MOCK_CONSOLE);
 
   // Request tabs
@@ -434,6 +435,9 @@ function App() {
   ]);
   const [activeTabId, setActiveTabId] = React.useState('tab-1');
   const [response] = React.useState(MOCK_RESPONSE);
+
+  // Search
+  const [searchQuery, setSearchQuery] = React.useState('');
 
   // Modals
   const [modalOpen, setModalOpen] = React.useState(null);
@@ -602,6 +606,25 @@ function App() {
     setTabs(prev => prev.map(t => t.id === reqId ? { ...t, name: newName } : t));
   }
 
+  function handleSend() {
+    const tab = tabs.find(t => t.id === activeTabId);
+    if (!tab) return;
+    const now = new Date();
+    const timeStr = now.toTimeString().slice(0, 8);
+    const logEntry = { time: timeStr, type: 'request', message: `${tab.method} ${tab.url || '(no url)'} — sending...`, ok: null };
+    setConsoleLogs(prev => [logEntry, ...prev]);
+  }
+
+  function handleSave() {
+    if (!activeTab) return;
+    updateActiveTab({ saved: true });
+  }
+
+  const activeCollection = activeTab?.collectionId
+    ? collections.find(c => c.id === activeTab.collectionId)
+    : null;
+  const activeBaseUrl = activeCollection?.baseUrl || '';
+
   const inputStyle = paneSize != null
     ? { flex: 'none', [splitDirection === 'horizontal' ? 'width' : 'height']: paneSize + '%' }
     : { flex: 1 };
@@ -621,6 +644,7 @@ function App() {
         environments={environments}
         onEnvChange={setActiveEnvId}
         onNewAction={handleNewAction}
+        onSearch={setSearchQuery}
       />
 
       <div className="flex-1 flex min-h-0">
@@ -647,6 +671,8 @@ function App() {
             onRenameCollection={renameCollection}
             onRenameFolder={renameFolder}
             onRenameRequest={renameRequest}
+            onClearHistory={() => setHistory([])}
+            externalSearch={searchQuery}
           />
         )}
 
@@ -667,6 +693,7 @@ function App() {
             breadcrumb={activeTab?.breadcrumb || []}
             saved={activeTab?.saved}
             onRename={newName => updateActiveTab({ name: newName })}
+            onSave={handleSave}
           />
 
           {/* URL bar */}
@@ -675,6 +702,8 @@ function App() {
             onMethodChange={m => updateActiveTab({ method: m })}
             url={activeTab?.url || ''}
             onUrlChange={u => updateActiveTab({ url: u })}
+            onSend={handleSend}
+            baseUrl={activeBaseUrl}
           />
 
           {/* Input / Output split */}

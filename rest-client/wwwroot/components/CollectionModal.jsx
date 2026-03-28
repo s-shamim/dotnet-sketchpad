@@ -1,5 +1,130 @@
 // CollectionModal.jsx — modal for collection settings, headers, auth, scripts, tests, import
 
+function ImportSection({ onImported, selectedCol }) {
+  const [json, setJson] = React.useState('');
+  const [baseUrl, setBaseUrl] = React.useState('');
+  const [error, setError] = React.useState('');
+  const [status, setStatus] = React.useState('');
+  const fileRef = React.useRef(null);
+
+  function detectFormat(parsed) {
+    if (parsed?.info?.schema?.includes('postman')) return 'postman';
+    if (parsed?.name && (parsed?.requests || parsed?.folders)) return 'custom';
+    return 'unknown';
+  }
+
+  function handleFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => setJson(ev.target.result);
+    reader.readAsText(file);
+  }
+
+  async function doImport() {
+    setError('');
+    setStatus('');
+    let parsed;
+    try {
+      parsed = JSON.parse(json);
+    } catch {
+      setError('invalid json — check the pasted content');
+      return;
+    }
+    const format = detectFormat(parsed);
+    if (format === 'unknown') {
+      setError('unrecognized format — expected postman v2.1 or custom json');
+      return;
+    }
+    setStatus('importing...');
+    try {
+      const res = await fetch('/api/collections/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ format, json, baseUrl: baseUrl || undefined }),
+      });
+      if (!res.ok) {
+        const msg = await res.text();
+        setError(msg || `import failed (${res.status})`);
+        setStatus('');
+        return;
+      }
+      const imported = await res.json();
+      setStatus('imported successfully');
+      if (onImported) onImported(imported);
+    } catch (err) {
+      setError('request failed — is the server running?');
+      setStatus('');
+    }
+  }
+
+  let detectedFormat = '';
+  try {
+    const p = JSON.parse(json);
+    detectedFormat = detectFormat(p);
+  } catch {}
+
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-xs text-gray-400 lowercase">import from postman v2.1 or custom json format</p>
+
+      {/* Paste or upload */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <label className="text-xs text-gray-400 lowercase">paste json</label>
+          <div className="flex items-center gap-2">
+            {detectedFormat && detectedFormat !== 'unknown' && (
+              <span className="text-[10px] text-gray-400 lowercase">detected: {detectedFormat}</span>
+            )}
+            <button
+              onClick={() => fileRef.current?.click()}
+              className="text-[10px] text-gray-400 hover:text-gray-600 border border-gray-200 px-2 py-0.5 rounded-sm transition-colors lowercase"
+            >
+              upload file
+            </button>
+            <input ref={fileRef} type="file" accept=".json" onChange={handleFile} className="hidden" />
+          </div>
+        </div>
+        <textarea
+          value={json}
+          onChange={e => { setJson(e.target.value); setError(''); setStatus(''); }}
+          placeholder={'paste collection json here...\n\n// postman v2.1 or custom format\n{\n  "name": "my api",\n  "baseUrl": "{{baseUrl}}",\n  "requests": [...]\n}'}
+          rows={8}
+          className="w-full border border-gray-200 rounded-sm py-2 px-3 text-sm text-gray-700 placeholder-gray-300 bg-transparent resize-none focus:outline-none focus-visible:ring-1 focus-visible:ring-gray-400 font-mono"
+        />
+      </div>
+
+      {/* Base URL override (always shown for Postman; optional for custom) */}
+      <div>
+        <label className="text-xs text-gray-400 lowercase mb-1 block">
+          base url {detectedFormat !== 'postman' && <span className="text-gray-300">(optional)</span>}
+        </label>
+        <input
+          value={baseUrl}
+          onChange={e => setBaseUrl(e.target.value)}
+          placeholder="https://api.example.com or {{baseUrl}}"
+          className="w-full border-b border-gray-300 py-2 text-sm text-gray-700 font-mono placeholder-gray-300 bg-transparent focus:outline-none focus:border-gray-500"
+        />
+        {detectedFormat === 'postman' && (
+          <p className="text-[10px] text-gray-300 mt-1">strips this prefix from all request urls and stores relative paths</p>
+        )}
+      </div>
+
+      {/* Feedback */}
+      {error && <p className="text-xs text-red-400 lowercase">{error}</p>}
+      {status && <p className="text-xs text-green-600 lowercase">{status}</p>}
+
+      <button
+        onClick={doImport}
+        disabled={!json.trim()}
+        className="self-start text-sm text-gray-500 border border-gray-200 px-3 py-1.5 rounded-sm hover:border-gray-400 hover:text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors lowercase"
+      >
+        import
+      </button>
+    </div>
+  );
+}
+
 window.CollectionModal = function CollectionModal({ collections, editColId, onClose, onSave }) {
   const isNew = !editColId;
   const [localCols, setLocalCols] = React.useState(() => JSON.parse(JSON.stringify(collections)));
@@ -19,7 +144,7 @@ window.CollectionModal = function CollectionModal({ collections, editColId, onCl
   function addNewCol() {
     const id = 'col-' + Date.now();
     const newCol = {
-      id, name: 'new collection', description: '',
+      id, name: 'new collection', description: '', baseUrl: '',
       headers: [{ id: 1, key: '', value: '', enabled: true }],
       authType: 'none', authData: {},
       preRequestScript: '', testScript: '',
@@ -121,6 +246,16 @@ window.CollectionModal = function CollectionModal({ collections, editColId, onCl
                   />
                 </div>
                 <div>
+                  <label className="text-xs text-gray-400 lowercase mb-1 block">base url</label>
+                  <input
+                    value={selectedCol.baseUrl || ''}
+                    onChange={e => updateCol('baseUrl', e.target.value)}
+                    placeholder="https://api.example.com or {{baseUrl}}"
+                    className="w-full border-b border-gray-300 py-2 text-sm text-gray-700 font-mono placeholder-gray-300 bg-transparent focus:outline-none focus:border-gray-500"
+                  />
+                  <p className="text-[10px] text-gray-300 mt-1">request URLs are stored as relative paths when this is set</p>
+                </div>
+                <div>
                   <span className="text-xs text-gray-400 lowercase block mb-1">requests</span>
                   <span className="text-sm text-gray-600">{countRequests(selectedCol)} requests</span>
                 </div>
@@ -154,8 +289,8 @@ window.CollectionModal = function CollectionModal({ collections, editColId, onCl
               <div className="flex flex-col gap-3">
                 <p className="text-xs text-gray-400 lowercase">default headers applied to all requests in this collection</p>
                 <KVEditor
-                  rows={selectedCol.headers || [{ id: 1, key: '', value: '', enabled: true }]}
-                  onChange={rows => updateCol('headers', rows)}
+                  pairs={selectedCol.headers || [{ id: 1, key: '', value: '', enabled: true }]}
+                  onChange={pairs => updateCol('headers', pairs)}
                 />
               </div>
             )}
@@ -254,17 +389,7 @@ window.CollectionModal = function CollectionModal({ collections, editColId, onCl
 
             {/* Import */}
             {activeSection === 'import' && (
-              <div className="flex flex-col gap-4">
-                <p className="text-xs text-gray-400 lowercase">import a collection from json or other formats</p>
-                <textarea
-                  placeholder='paste collection json here...'
-                  rows={8}
-                  className="w-full border border-gray-200 rounded-sm py-2 px-3 text-sm text-gray-700 placeholder-gray-300 bg-transparent resize-none focus:outline-none focus-visible:ring-1 focus-visible:ring-gray-400 font-mono"
-                />
-                <button className="self-start text-sm text-gray-500 border border-gray-200 px-3 py-1.5 rounded-sm hover:border-gray-400 hover:text-gray-700 transition-colors lowercase">
-                  import
-                </button>
-              </div>
+              <ImportSection onImported={cols => { setLocalCols(cols); setActiveSection('settings'); }} selectedCol={selectedCol} />
             )}
           </div>
         </div>

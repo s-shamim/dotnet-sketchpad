@@ -1,6 +1,6 @@
 // RequestShoulder.jsx — request name, breadcrumb, save button
 
-window.RequestShoulder = function RequestShoulder({ name, breadcrumb, saved, onRename }) {
+window.RequestShoulder = function RequestShoulder({ name, breadcrumb, saved, onRename, onSave }) {
   const [editing, setEditing] = React.useState(false);
   const [editName, setEditName] = React.useState('');
 
@@ -53,6 +53,7 @@ window.RequestShoulder = function RequestShoulder({ name, breadcrumb, saved, onR
         )}
       </div>
       <button
+        onClick={onSave}
         className="text-xs text-gray-400 hover:text-gray-700 transition-colors lowercase flex-shrink-0"
       >
         {saved ? 'save' : 'save as'}

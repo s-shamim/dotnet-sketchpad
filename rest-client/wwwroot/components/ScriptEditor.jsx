@@ -23,13 +23,17 @@ window.ScriptEditor = function ScriptEditor({ value, onChange, placeholder, envi
     // Actions
     { label: 'set env', detail: 'set environment variable', insert: 'set env ' },
     { label: 'set header', detail: 'set request header', insert: 'set header ' },
+    // Logging
+    { label: 'log', detail: 'log a value to console', insert: 'log ' },
     // Functions
     { label: 'uuid()', detail: 'generate UUID', insert: 'uuid()' },
     { label: 'now()', detail: 'current ISO timestamp', insert: 'now()' },
-    { label: 'base64()', detail: 'base64 encode', insert: 'base64(' },
+    { label: 'timestamp()', detail: 'unix epoch seconds', insert: 'timestamp()' },
+    { label: 'base64_encode()', detail: 'base64 encode', insert: 'base64_encode(' },
+    { label: 'base64_decode()', detail: 'base64 decode', insert: 'base64_decode(' },
     { label: 'sha256()', detail: 'SHA-256 hash', insert: 'sha256(' },
     { label: 'jwt_payload()', detail: 'decode JWT payload', insert: 'jwt_payload(' },
-    { label: 'json_path()', detail: 'extract JSON path', insert: 'json_path(' },
+    { label: 'length()', detail: 'string length or array count', insert: 'length(' },
   ];
 
   function getEnvSuggestions() {

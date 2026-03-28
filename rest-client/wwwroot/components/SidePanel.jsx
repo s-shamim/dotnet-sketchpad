@@ -3,9 +3,9 @@
 window.SidePanel = function SidePanel({
   activePanel, onClose, collections, environments, activeEnvId,
   onEnvActivate, history, onSelectRequest, onEditEnv, onEditCollection, onNewAction,
-  onRenameCollection, onRenameFolder, onRenameRequest,
+  onRenameCollection, onRenameFolder, onRenameRequest, onClearHistory, externalSearch,
 }) {
-  const [search, setSearch] = React.useState('');
+  const [localSearch, setLocalSearch] = React.useState('');
   const [openGroups, setOpenGroups] = React.useState({});
   const [editingId, setEditingId] = React.useState(null);
   const [editingName, setEditingName] = React.useState('');
@@ -56,6 +56,7 @@ window.SidePanel = function SidePanel({
   }
 
   const titles = { collections: 'collections', environments: 'environments', history: 'history' };
+  const search = externalSearch || localSearch;
   const q = search.toLowerCase();
 
   // Recursively filter folders and requests by search query
@@ -145,8 +146,8 @@ window.SidePanel = function SidePanel({
             <div className="relative flex items-center">
               <Icon name="magnifying-glass" size={12} className="absolute left-0 text-gray-300 pointer-events-none" />
               <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
+                value={localSearch}
+                onChange={e => setLocalSearch(e.target.value)}
                 placeholder="filter..."
                 className="w-full border-b border-gray-200 focus:border-gray-400 pb-1 pl-4 text-xs bg-transparent text-gray-700 outline-none placeholder-gray-300"
               />
@@ -237,7 +238,17 @@ window.SidePanel = function SidePanel({
 
       {/* History */}
       {activePanel === 'history' && (
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto flex flex-col">
+          {history.length > 0 && (
+            <div className="flex justify-end px-3 py-1.5 border-b border-gray-100 flex-shrink-0">
+              <button
+                onClick={onClearHistory}
+                className="text-[10px] text-gray-400 hover:text-red-400 transition-colors lowercase"
+              >
+                clear all
+              </button>
+            </div>
+          )}
           {history.length === 0 && (
             <p className="text-center text-gray-300 text-xs py-8 lowercase">no history yet</p>
           )}
