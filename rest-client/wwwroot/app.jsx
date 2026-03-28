@@ -300,15 +300,15 @@ const MOCK_ENVIRONMENTS = [
   {
     id: 'env-1', name: 'development',
     variables: [
-      { id: 1, key: 'base_url', initialValue: 'http://localhost:3000', currentValue: 'http://localhost:3000' },
-      { id: 2, key: 'api_key', initialValue: 'dev-key-123', currentValue: 'dev-key-123' },
+      { id: 1, key: 'base_url', initialValue: 'http://localhost:3000', currentValue: 'http://localhost:3000', enabled: true },
+      { id: 2, key: 'api_key', initialValue: 'dev-key-123', currentValue: 'dev-key-123', enabled: true },
     ],
   },
   {
     id: 'env-2', name: 'production',
     variables: [
-      { id: 1, key: 'base_url', initialValue: 'https://api.example.com', currentValue: 'https://api.example.com' },
-      { id: 2, key: 'api_key', initialValue: '', currentValue: '' },
+      { id: 1, key: 'base_url', initialValue: 'https://api.example.com', currentValue: 'https://api.example.com', enabled: true },
+      { id: 2, key: 'api_key', initialValue: '', currentValue: '', enabled: true },
     ],
   },
 ];

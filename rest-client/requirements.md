@@ -1,4 +1,4 @@
-# REST Client — Feature Requirements
+﻿# REST Client — Feature Requirements
 
 > Web-native REST client built as a .NET 10 file-based app with React 18 frontend.  
 > All functional logic runs server-side in C#. The UI is purely presentational.
@@ -71,10 +71,21 @@ Browser (React 18)                    Server (ASP.NET + EF Core + SQLite)
 ## Database Schema
 
 ```
+┌───────────────────────────────────────────┐
+│                  Workspace                │
+├───────────────────────────────────────────┤
+│ Id          int       PK                  │
+│ Name        string                        │
+│ IsActive    bool                          │
+│ CreatedAt   datetime                      │
+└───────────────────────────────────────────┘
+
+```
 ┌─────────────────────────────────────────────────────────┐
 │                       Collection                        │
 ├─────────────────────────────────────────────────────────┤
 │ Id              int          PK                         │
+│ WorkspaceId     int          FK                         │
 │ Name            string                                  │
 │ Description     string       nullable                   │
 │ BaseUrl         string       nullable — e.g. {{baseUrl}}│
@@ -133,16 +144,17 @@ Browser (React 18)                    Server (ASP.NET + EF Core + SQLite)
 │ Id          int       PK     │    │ Id              int    PK    │
 │ Name        string           │    │ Method          string       │
 │ IsActive    bool             │    │ Url             string       │
-│ CreatedAt   datetime         │    │ RequestHeaders  string json  │
-│ UpdatedAt   datetime         │    │ RequestBody     string null  │
-├──────────────────────────────┤    │ StatusCode      int          │
-│         1:N                  │    │ StatusText      string       │
-│         ▼                    │    │ ResponseHeaders string json  │
-│ ┌──────────────────────────┐ │    │ ResponseBody    string null  │
-│ │  EnvironmentVariable     │ │    │ DurationMs      int          │
-│ ├──────────────────────────┤ │    │ ResponseSizeBytes int        │
-│ │ Id             int    PK │ │    │ Timestamp       datetime     │
-│ │ EnvironmentId  int    FK │ │    └──────────────────────────────┘
+│ IsGlobal    bool             │    │ RequestHeaders  string json  │
+│ WorkspaceId int       FK     │    │ RequestBody     string null  │
+│ CreatedAt   datetime         │    │ StatusCode      int          │
+│ UpdatedAt   datetime         │    │ StatusText      string       │
+├──────────────────────────────┤    │ ResponseHeaders string json  │
+│         1:N                  │    │ ResponseBody    string null  │
+│         ▼                    │    │ DurationMs      int          │
+│ ┌──────────────────────────┐ │    │ ResponseSizeBytes int        │
+│ │  EnvironmentVariable     │ │    │ WorkspaceId     int    FK    │
+│ ├──────────────────────────┤ │    │ Timestamp       datetime     │
+│ │ Id             int    PK │ │    └──────────────────────────────┘
 │ │ Key            string    │ │
 │ │ InitialValue   string    │ │    ┌──────────────────────────────┐
 │ │ CurrentValue   string    │ │    │        Preference            │
@@ -892,5 +904,6 @@ rest-client/
         ├── ConsolePanel.jsx        ← collapsible log panel
         ├── ScriptEditor.jsx        ← textarea with autocomplete overlay
         ├── EnvModal.jsx            ← environment editor modal
-        └── CollectionModal.jsx     ← collection settings/import modal
+        ├── CollectionModal.jsx     ← collection settings/import modal
+        └── WorkspaceModal.jsx      ← workspace switch/create/rename/delete modal
 ```
