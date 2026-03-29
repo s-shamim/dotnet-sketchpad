@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html data-theme="zinc-light">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>flow chart</title>
+
+  <!-- 1. Flash-prevention — MUST be first -->
+  <script>
+    (function() {
+      var t = localStorage.getItem('ui-theme') || 'zinc';
+      var m = localStorage.getItem('ui-mode')  || 'light';
+      document.documentElement.setAttribute('data-theme', t + '-' + m);
+    })();
+  </script>
+
+  <!-- 2. React 18 + ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+  <!-- 3. Babel (JSX transform) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- 4. Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- 5. Tailwind config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            white: 'var(--color-white)',
+            gray: {
+              50:  'var(--gray-50)',
+              100: 'var(--gray-100)',
+              200: 'var(--gray-200)',
+              300: 'var(--gray-300)',
+              400: 'var(--gray-400)',
+              500: 'var(--gray-500)',
+              600: 'var(--gray-600)',
+              700: 'var(--gray-700)',
+              800: 'var(--gray-800)',
+              900: 'var(--gray-900)',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- 6. Theme CSS vars -->
+  <link rel="stylesheet" href="themes.css" />
+
+  <!-- 7. Inter font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <!-- 8. Phosphor icons (ph-light only) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/light/style.css" />
+
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; overflow: hidden; }
+    #root { width: 100vw; height: 100vh; display: flex; flex-direction: column; }
+
+    .canvas-wrap { flex: 1; overflow: hidden; position: relative; }
+    .canvas-wrap svg { width: 100%; height: 100%; display: block; }
+
+    /* inline editor textarea inside foreignObject */
+    .node-editor {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      resize: none;
+      text-align: center;
+      padding: 4px;
+      font-family: inherit;
+      overflow: hidden;
+    }
+
+    /* selection box */
+    .sel-box { fill: rgba(59,130,246,0.08); stroke: #3b82f6; stroke-width: 1; stroke-dasharray: 4 2; }
+
+    /* port dot — hidden by default, revealed on node or port-group hover */
+    .port-dot { fill: #3b82f6; opacity: 0; transition: opacity 0.12s; }
+    .node-group:hover .port-dot { opacity: 0.55; }
+    .port-group:hover .port-dot { opacity: 1 !important; }
+
+    /* resize handle — corner squares, visible when node is selected */
+    .resize-handle {
+      fill: var(--color-white);
+      stroke: #3b82f6;
+      stroke-width: 1.5;
+    }
+
+    /* drag-in-progress edge */
+    .edge-preview { fill: none; stroke: #3b82f6; stroke-width: 1.5; stroke-dasharray: 6 3; pointer-events: none; }
+
+    /* node selection ring */
+    .node-selected > rect,
+    .node-selected > polygon { stroke: #3b82f6 !important; stroke-width: 2 !important; }
+
+    /* edge selection */
+    .edge-selected > path { stroke: #3b82f6 !important; }
+    .edge-hit { fill: none; stroke: transparent; stroke-width: 12; cursor: pointer; }
+
+    /* group frame */
+    .group-rect { rx: 4; stroke-width: 1; stroke-dasharray: 6 3; }
+    .group-selected > .group-rect { stroke: #3b82f6 !important; }
+
+    /* scrollbar suppression inside SVG elements */
+    foreignObject textarea { overflow: hidden; }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" src="shared.jsx?v=1"></script>
+  <script type="text/babel" src="canvas.jsx?v=1"></script>
+  <script type="text/babel" src="properties.jsx?v=1"></script>
+  <script type="text/babel" src="app.jsx?v=1"></script>
+</body>
+
+</html>
