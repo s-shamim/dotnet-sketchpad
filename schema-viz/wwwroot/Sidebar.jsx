@@ -8,6 +8,7 @@ function Sidebar({ schema, selectedTableId, onSelectTable, actions }) {
   const [parseError, setParseError] = React.useState('');
   const [clearConfirm, setClearConfirm] = React.useState(false);
   const [deleteConfirm, setDeleteConfirm] = React.useState(false);
+  const [resetConfirm, setResetConfirm] = React.useState(false);
   const [validating, setValidating] = React.useState(false);
   const [validationResult, setValidationResult] = React.useState(null);
   const [exportModal, setExportModal] = React.useState(false);
@@ -238,6 +239,12 @@ function Sidebar({ schema, selectedTableId, onSelectTable, actions }) {
                     clear canvas
                   </button>
                 </div>
+                <button
+                  onClick={() => setResetConfirm(true)}
+                  className="self-start text-xs text-gray-300 hover:text-gray-500 transition-colors lowercase"
+                >
+                  reset to demo
+                </button>
               </div>
             )}
           </>
@@ -477,6 +484,14 @@ function Sidebar({ schema, selectedTableId, onSelectTable, actions }) {
             </div>
           </div>
         </Modal>
+      )}
+      {resetConfirm && (
+        <ConfirmModal
+          message="reset canvas to the demo schema?"
+          confirmLabel="reset"
+          onConfirm={() => { actions.resetToDemo(); setResetConfirm(false); }}
+          onCancel={() => setResetConfirm(false)}
+        />
       )}
       {clearConfirm && (
         <ConfirmModal

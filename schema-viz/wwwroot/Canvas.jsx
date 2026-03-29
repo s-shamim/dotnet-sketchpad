@@ -13,12 +13,72 @@ const ZOOM_DEFAULT_IDX = 6; // 1.0
 
 function Canvas({ schema, selectedTableId, onSelectTable, onPositionChange, onNameChange, onAddColumn, onAddTable, onAutoArrange }) {
   const scrollRef = React.useRef(null);
+  const innerRef  = React.useRef(null); // for PNG export
   const [zoomIdx, setZoomIdx] = React.useState(ZOOM_DEFAULT_IDX);
   const zoom = ZOOM_LEVELS[zoomIdx];
 
   function zoomIn()  { setZoomIdx(i => Math.min(i + 1, ZOOM_LEVELS.length - 1)); }
   function zoomOut() { setZoomIdx(i => Math.max(i - 1, 0)); }
   function zoomReset() { setZoomIdx(ZOOM_DEFAULT_IDX); }
+
+  // ── Export as PNG ─────────────────────────────────────────────────────────
+  const [exporting, setExporting] = React.useState(false);
+
+  async function exportPng() {
+    const el = innerRef.current;
+    if (!el || typeof html2canvas === 'undefined' || schema.tables.length === 0) return;
+    setExporting(true);
+    try {
+      const PAD  = 40;
+      const SCALE = 2;
+
+      // Compute bounding box of all tables (unscaled coordinates)
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const t of schema.tables) {
+        const h = HEADER_HEIGHT + t.columns.length * COL_ROW_HEIGHT + FOOTER_HEIGHT;
+        if (t.x            < minX) minX = t.x;
+        if (t.y            < minY) minY = t.y;
+        if (t.x + TABLE_WIDTH > maxX) maxX = t.x + TABLE_WIDTH;
+        if (t.y + h        > maxY) maxY = t.y + h;
+      }
+      const cropX = Math.max(0, minX - PAD);
+      const cropY = Math.max(0, minY - PAD);
+      const cropW = maxX - minX + PAD * 2;
+      const cropH = maxY - minY + PAD * 2;
+
+      // Reset zoom for crisp 1:1 capture
+      const prevTransform = el.style.transform;
+      el.style.transform = 'scale(1)';
+
+      // Capture the full element, then manually crop via a second canvas
+      const full = await html2canvas(el, {
+        backgroundColor: getComputedStyle(document.documentElement)
+          .getPropertyValue('--gray-100').trim() || '#f3f4f6',
+        scale: SCALE,
+        useCORS: true,
+        logging: false,
+      });
+
+      el.style.transform = prevTransform;
+
+      // Slice to the bounding box
+      const out = document.createElement('canvas');
+      out.width  = cropW * SCALE;
+      out.height = cropH * SCALE;
+      out.getContext('2d').drawImage(
+        full,
+        cropX * SCALE, cropY * SCALE, cropW * SCALE, cropH * SCALE,
+        0, 0, cropW * SCALE, cropH * SCALE
+      );
+
+      const link = document.createElement('a');
+      link.download = 'schema.png';
+      link.href = out.toDataURL('image/png');
+      link.click();
+    } finally {
+      setExporting(false);
+    }
+  }
 
   // ── Fit to view ───────────────────────────────────────────────────────────
   function fitToView() {
@@ -44,6 +104,76 @@ function Canvas({ schema, selectedTableId, onSelectTable, onPositionChange, onNa
     const scrollTop  = minY - TABLE_PAD - (vpH - contentH - TABLE_PAD * 2) / 2;
 
     el.scrollTo({ left: Math.max(0, scrollLeft), top: Math.max(0, scrollTop), behavior: 'smooth' });
+  }
+
+  // ── Ctrl+scroll zoom ─────────────────────────────────────────────────────
+  React.useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    function onWheel(e) {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      // Save scroll centre before zoom so we can restore it after
+      const rect = el.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      const contentX = (el.scrollLeft + mouseX) / ZOOM_LEVELS[zoomIdx];
+      const contentY = (el.scrollTop  + mouseY) / ZOOM_LEVELS[zoomIdx];
+      setZoomIdx(prev => {
+        const next = e.deltaY < 0
+          ? Math.min(prev + 1, ZOOM_LEVELS.length - 1)
+          : Math.max(prev - 1, 0);
+        // Re-scroll after React re-renders so mouse stays over same content point
+        requestAnimationFrame(() => {
+          if (!scrollRef.current) return;
+          const newZoom = ZOOM_LEVELS[next];
+          scrollRef.current.scrollLeft = contentX * newZoom - mouseX;
+          scrollRef.current.scrollTop  = contentY * newZoom - mouseY;
+        });
+        return next;
+      });
+    }
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [zoomIdx]);
+
+  // ── Middle-mouse pan ──────────────────────────────────────────────────────
+  const midPanRef = React.useRef(null);
+
+  React.useEffect(() => {
+    function onMidMove(e) {
+      if (!midPanRef.current) return;
+      const el = scrollRef.current;
+      if (!el) return;
+      el.scrollLeft = midPanRef.current.scrollLeft - (e.clientX - midPanRef.current.mouseX);
+      el.scrollTop  = midPanRef.current.scrollTop  - (e.clientY - midPanRef.current.mouseY);
+    }
+    function onMidUp(e) {
+      if (e.button !== 1) return;
+      midPanRef.current = null;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+    document.addEventListener('mousemove', onMidMove);
+    document.addEventListener('mouseup',   onMidUp);
+    return () => {
+      document.removeEventListener('mousemove', onMidMove);
+      document.removeEventListener('mouseup',   onMidUp);
+    };
+  }, []);
+
+  function handleCanvasMouseDown(e) {
+    if (e.button === 1) {
+      // Middle mouse — start pan
+      e.preventDefault();
+      const el = scrollRef.current;
+      if (!el) return;
+      midPanRef.current = { mouseX: e.clientX, mouseY: e.clientY, scrollLeft: el.scrollLeft, scrollTop: el.scrollTop };
+      document.body.style.cursor = 'grabbing';
+      document.body.style.userSelect = 'none';
+      return;
+    }
+    handlePanMouseDown(e);
   }
 
   // ── Space+drag pan state ─────────────────────────────────────────────────
@@ -218,11 +348,13 @@ function Canvas({ schema, selectedTableId, onSelectTable, onPositionChange, onNa
         className="absolute inset-0 overflow-auto"
         style={{ background: 'var(--gray-100)', cursor: spaceDown ? 'grab' : '' }}
         onClick={() => !spaceDown && onSelectTable(null)}
-        onMouseDown={handlePanMouseDown}
+        onMouseDown={handleCanvasMouseDown}
       >
         {/* sizer div expands/contracts the scroll area to match current zoom */}
         <div style={{ width: CANVAS_W * zoom, height: CANVAS_H * zoom, position: 'relative', flexShrink: 0 }}>
-        <div style={{
+        <div
+          ref={innerRef}
+          style={{
           position: 'absolute',
           top: 0, left: 0,
           width: CANVAS_W,
@@ -253,6 +385,11 @@ function Canvas({ schema, selectedTableId, onSelectTable, onPositionChange, onNa
               const cy1 = fromY;
               const cx2 = toX - CURVE_CTRL;
               const cy2 = toY;
+              // Label positions: 20% along curve from each end
+              const lx1 = fromX + (cx1 - fromX) * 0.35 + 0;
+              const ly1 = fromY - 10; // '1' label
+              const lx2 = toX   - (toX - cx2) * 0.35;
+              const ly2 = toY   - 10; // 'N' label
               return (
                 <g key={id}>
                   <path
@@ -264,6 +401,10 @@ function Canvas({ schema, selectedTableId, onSelectTable, onPositionChange, onNa
                   />
                   <circle cx={fromX} cy={fromY} r="3.5" fill="var(--gray-400)" />
                   <circle cx={toX}   cy={toY}   r="3.5" fill="var(--gray-600)" />
+                  <text x={lx1} y={ly1} textAnchor="middle" fontSize="10" fontFamily="monospace"
+                    fill="var(--gray-500)" style={{ userSelect: 'none' }}>1</text>
+                  <text x={lx2} y={ly2} textAnchor="middle" fontSize="10" fontFamily="monospace"
+                    fill="var(--gray-500)" style={{ userSelect: 'none' }}>N</text>
                 </g>
               );
             })}
@@ -332,6 +473,19 @@ function Canvas({ schema, selectedTableId, onSelectTable, onPositionChange, onNa
             <Icon name="plus" size={13} className="" />
           </button>
         </div>
+        {schema.tables.length > 0 && (
+          <button
+            onClick={e => { e.stopPropagation(); exportPng(); }}
+            disabled={exporting}
+            aria-label="export png"
+            title="export as PNG"
+            className="flex items-center justify-center bg-white border border-gray-300 w-9 h-9 rounded-sm shadow-sm hover:border-gray-500 hover:text-gray-800 text-gray-500 transition-colors disabled:opacity-50"
+          >
+            {exporting
+              ? <Spinner size={14} />
+              : <Icon name="image" size={16} className="" />}
+          </button>
+        )}
         {schema.tables.length > 0 && (
           <button
             onClick={e => { e.stopPropagation(); onAutoArrange(); fitToView(); }}

@@ -67,20 +67,12 @@ function gridPosition(existingCount, index) {
 
 // ── App ───────────────────────────────────────────────────────────────────────
 
-function App() {
-  const [theme, setTheme] = React.useState(() => localStorage.getItem('ui-theme') || 'zinc');
-  const [mode,  setMode]  = React.useState(() => localStorage.getItem('ui-mode')  || 'light');
+const STORAGE_KEY = 'schema-viz-canvas';
 
-  React.useEffect(() => {
-    document.documentElement.setAttribute('data-theme', `${theme}-${mode}`);
-    localStorage.setItem('ui-theme', theme);
-    localStorage.setItem('ui-mode',  mode);
-  }, [theme, mode]);
-
-  const [schema, setSchema] = React.useState(() => ({
-    tables: [
-      {
-        id: 'demo-users', name: 'users', x: 400, y: 60,
+const DEMO_SCHEMA = {
+  tables: [
+    {
+      id: 'demo-users', name: 'users', x: 400, y: 60,
         columns: [
           { id: 'u1', name: 'id',         type: 'INT',          nullable: false, isPK: true  },
           { id: 'u2', name: 'email',       type: 'VARCHAR(255)', nullable: false, isPK: false },
@@ -127,13 +119,89 @@ function App() {
         ],
       },
     ],
-  }));
+};
+
+function loadSchema() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch {}
+  return DEMO_SCHEMA;
+}
+
+function App() {
+  const [theme, setTheme] = React.useState(() => localStorage.getItem('ui-theme') || 'zinc');
+  const [mode,  setMode]  = React.useState(() => localStorage.getItem('ui-mode')  || 'light');
+
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-theme', `${theme}-${mode}`);
+    localStorage.setItem('ui-theme', theme);
+    localStorage.setItem('ui-mode',  mode);
+  }, [theme, mode]);
+
+  const [schema, setSchema] = React.useState(loadSchema);
   const [selectedTableId, setSelectedTableId] = React.useState(null);
+
+  // ── Undo / redo history ───────────────────────────────────────────────────
+  const historyRef = React.useRef([loadSchema()]);  // past snapshots
+  const futureRef  = React.useRef([]);              // redo stack
+
+  // Wrap setSchema so every mutation records a history entry.
+  // Pass skipHistory: true for position-change drags (too noisy).
+  function applySchema(updater, skipHistory = false) {
+    setSchema(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      if (!skipHistory) {
+        historyRef.current = [...historyRef.current, prev];
+        futureRef.current  = [];
+      }
+      return next;
+    });
+  }
+
+  function undo() {
+    const past = historyRef.current;
+    if (past.length === 0) return;
+    setSchema(current => {
+      futureRef.current  = [current, ...futureRef.current];
+      const previous     = past[past.length - 1];
+      historyRef.current = past.slice(0, -1);
+      return previous;
+    });
+  }
+
+  function redo() {
+    const future = futureRef.current;
+    if (future.length === 0) return;
+    setSchema(current => {
+      historyRef.current = [...historyRef.current, current];
+      futureRef.current  = future.slice(1);
+      return future[0];
+    });
+  }
+
+  React.useEffect(() => {
+    function onKey(e) {
+      const mod = e.ctrlKey || e.metaKey;
+      if (!mod) return;
+      const tag = e.target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+      if ((e.key === 'y') || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); redo(); }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // Persist schema to localStorage on every change
+  React.useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(schema)); } catch {}
+  }, [schema]);
 
   // ── Schema mutations ──────────────────────────────────────────────────────
 
   function importSchema(newTables) {
-    setSchema(prev => {
+    applySchema(prev => {
       // Merge with placeholder positions first, then auto-arrange the full set
       const placeholder = newTables.map((t, i) => ({ ...t, ...gridPosition(prev.tables.length, i) }));
       const merged = [...prev.tables, ...placeholder];
@@ -142,13 +210,13 @@ function App() {
   }
 
   function clearSchema() {
-    setSchema({ tables: [] });
+    applySchema({ tables: [] });
     setSelectedTableId(null);
   }
 
   function addTable() {
     const id = generateId();
-    setSchema(prev => {
+    applySchema(prev => {
       const pos = gridPosition(prev.tables.length, 0);
       return {
         tables: [...prev.tables, {
@@ -164,24 +232,24 @@ function App() {
   }
 
   function deleteTable(id) {
-    setSchema(prev => ({ tables: prev.tables.filter(t => t.id !== id) }));
+    applySchema(prev => ({ tables: prev.tables.filter(t => t.id !== id) }));
     if (selectedTableId === id) setSelectedTableId(null);
   }
 
   function updateTableName(id, name) {
-    setSchema(prev => ({
+    applySchema(prev => ({
       tables: prev.tables.map(t => t.id === id ? { ...t, name } : t),
     }));
   }
 
   function moveTable(id, x, y) {
-    setSchema(prev => ({
+    applySchema(prev => ({
       tables: prev.tables.map(t => t.id === id ? { ...t, x, y } : t),
-    }));
+    }), true); // skipHistory — drag commits are too frequent to track
   }
 
   function addColumn(tableId, col) {
-    setSchema(prev => ({
+    applySchema(prev => ({
       tables: prev.tables.map(t =>
         t.id === tableId ? { ...t, columns: [...t.columns, col] } : t
       ),
@@ -189,7 +257,7 @@ function App() {
   }
 
   function deleteColumn(tableId, colId) {
-    setSchema(prev => ({
+    applySchema(prev => ({
       tables: prev.tables.map(t =>
         t.id === tableId ? { ...t, columns: t.columns.filter(c => c.id !== colId) } : t
       ),
@@ -197,7 +265,7 @@ function App() {
   }
 
   function updateColumn(tableId, colId, updates) {
-    setSchema(prev => ({
+    applySchema(prev => ({
       tables: prev.tables.map(t =>
         t.id === tableId
           ? { ...t, columns: t.columns.map(c => c.id === colId ? { ...c, ...updates } : c) }
@@ -207,7 +275,7 @@ function App() {
   }
 
   function addForeignKey(tableId, fk) {
-    setSchema(prev => ({
+    applySchema(prev => ({
       tables: prev.tables.map(t =>
         t.id === tableId ? { ...t, foreignKeys: [...t.foreignKeys, fk] } : t
       ),
@@ -215,7 +283,7 @@ function App() {
   }
 
   function deleteForeignKey(tableId, fkId) {
-    setSchema(prev => ({
+    applySchema(prev => ({
       tables: prev.tables.map(t =>
         t.id === tableId ? { ...t, foreignKeys: t.foreignKeys.filter(fk => fk.id !== fkId) } : t
       ),
@@ -351,7 +419,15 @@ function App() {
   }
 
   function autoArrange() {
-    setSchema(prev => ({ tables: arrangeTables(prev.tables) }));
+    applySchema(prev => ({ tables: arrangeTables(prev.tables) }));
+  }
+
+  function resetToDemo() {
+    localStorage.removeItem(STORAGE_KEY);
+    historyRef.current = [];
+    futureRef.current  = [];
+    setSchema(DEMO_SCHEMA);
+    setSelectedTableId(null);
   }
 
   const actions = {
@@ -366,6 +442,9 @@ function App() {
     updateColumn,
     addForeignKey,
     deleteForeignKey,
+    resetToDemo,
+    undo,
+    redo,
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -388,6 +467,22 @@ function App() {
           )}
         </div>
         <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={undo}
+              title="undo (Ctrl+Z)"
+              className="flex items-center justify-center w-7 h-7 text-gray-400 hover:text-gray-700 rounded transition-colors"
+            >
+              <Icon name="arrow-counter-clockwise" size={14} className="" />
+            </button>
+            <button
+              onClick={redo}
+              title="redo (Ctrl+Y)"
+              className="flex items-center justify-center w-7 h-7 text-gray-400 hover:text-gray-700 rounded transition-colors"
+            >
+              <Icon name="arrow-clockwise" size={14} className="" />
+            </button>
+          </div>
           <Dropdown
             value={theme}
             onChange={setTheme}

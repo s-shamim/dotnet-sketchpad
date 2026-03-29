@@ -7,6 +7,7 @@
 function TableNode({ table, x, y, isSelected, onSelect, onDragStart, panMode, onNameChange, onAddColumn }) {
   const [editingName, setEditingName] = React.useState(false);
   const [nameVal, setNameVal] = React.useState(table.name);
+  const [collapsed, setCollapsed] = React.useState(false);
 
   // Keep name input in sync with prop (e.g. sidebar edits)
   React.useEffect(() => {
@@ -73,11 +74,19 @@ function TableNode({ table, x, y, isSelected, onSelect, onDragStart, panMode, on
             {table.name}
           </span>
         )}
+        <button
+          onMouseDown={e => e.stopPropagation()}
+          onClick={e => { e.stopPropagation(); setCollapsed(c => !c); }}
+          className="flex items-center text-gray-400 hover:text-white transition-colors shrink-0 mr-0.5"
+          title={collapsed ? 'expand' : 'collapse'}
+        >
+          <Icon name={collapsed ? 'caret-down' : 'caret-up'} size={11} className="" />
+        </button>
         <Icon name="dots-six-vertical" size={12} className="text-gray-500 shrink-0" />
       </div>
 
-      {/* ── Columns ── */}
-      {table.columns.length === 0 && (
+      {/* ── Columns ── hidden when collapsed ── */}
+      {!collapsed && table.columns.length === 0 && (
         <div
           className="flex items-center justify-center text-[10px] text-gray-300 italic lowercase border-b border-gray-100"
           style={{ height: COL_ROW_HEIGHT }}
@@ -85,7 +94,7 @@ function TableNode({ table, x, y, isSelected, onSelect, onDragStart, panMode, on
           no columns yet
         </div>
       )}
-      {table.columns.map(col => (
+      {!collapsed && table.columns.map(col => (
         <div
           key={col.id}
           className="flex items-center gap-1.5 px-2.5 border-b border-gray-100"
@@ -105,7 +114,8 @@ function TableNode({ table, x, y, isSelected, onSelect, onDragStart, panMode, on
         </div>
       ))}
 
-      {/* ── Footer ── */}
+      {/* ── Footer ── hidden when collapsed ── */}
+      {!collapsed && (
       <div
         className="flex items-center px-2.5"
         style={{ height: FOOTER_HEIGHT }}
@@ -118,6 +128,7 @@ function TableNode({ table, x, y, isSelected, onSelect, onDragStart, panMode, on
           <Icon name="plus" size={10} className="" /> add column
         </button>
       </div>
+      )}
     </div>
   );
 }
