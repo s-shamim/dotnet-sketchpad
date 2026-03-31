@@ -12,9 +12,97 @@ function Icon({ name, size = 14, className = 'text-gray-400' }) {
 function Spinner({ size = 16 }) {
   return (
     <span
+      role="status"
+      aria-label="loading"
       style={{ width: size, height: size }}
       className="inline-block border-2 border-gray-200 border-t-gray-500 rounded-full animate-spin"
     />
+  );
+}
+
+function Toggle({ checked, onChange, label }) {
+  function handleKeyDown(e) {
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      onChange(!checked);
+    }
+  }
+  return (
+    <div
+      className="flex items-center gap-3 cursor-pointer group"
+      onClick={() => onChange(!checked)}
+    >
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        tabIndex={0}
+        onKeyDown={handleKeyDown}
+        onClick={e => e.stopPropagation()}
+        className={`relative w-8 h-4 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-400 focus-visible:ring-offset-1 ${
+          checked ? 'bg-gray-600' : 'bg-gray-200'
+        }`}
+      >
+        <span
+          className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full transition-transform ${
+            checked ? 'translate-x-4' : 'translate-x-0'
+          }`}
+          style={{ backgroundColor: 'var(--toggle-thumb)' }}
+        />
+      </button>
+      {label && (
+        <span className="text-sm text-gray-500 group-hover:text-gray-700 transition-colors lowercase select-none">
+          {label}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function Dropdown({ value, onChange, options, placeholder = 'select...', width = 'w-48' }) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+
+  React.useEffect(() => {
+    function handleOutside(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
+  const selected = options.find(o => (o.value ?? o) === value);
+  const label = selected ? (selected.label ?? selected) : placeholder;
+
+  return (
+    <div className={`relative ${width}`} ref={ref}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between border border-gray-200 rounded-sm px-3 py-1.5 text-sm text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-400"
+      >
+        <span className={`lowercase ${!value ? 'text-gray-400' : ''}`}>{label}</span>
+        <Icon name="caret-down" size={12} className={`text-gray-400 transition-transform ml-2 ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 mt-1 w-full border border-gray-200 bg-white shadow-sm rounded-sm z-20">
+          {options.map(opt => {
+            const v = opt.value ?? opt;
+            const l = opt.label  ?? opt;
+            return (
+              <button
+                key={v}
+                onClick={() => { onChange(v); setOpen(false); }}
+                className={`w-full text-left px-3 py-2 text-sm transition-colors lowercase ${
+                  value === v ? 'text-gray-800 bg-gray-100' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                }`}
+              >
+                {l}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -44,6 +132,15 @@ function useToast() {
 }
 
 function App() {
+  const [theme, setTheme] = React.useState(() => localStorage.getItem('ui-theme') || 'zinc');
+  const [mode,  setMode]  = React.useState(() => localStorage.getItem('ui-mode')  || 'light');
+
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-theme', `${theme}-${mode}`);
+    localStorage.setItem('ui-theme', theme);
+    localStorage.setItem('ui-mode',  mode);
+  }, [theme, mode]);
+
   const [key, setKey] = useState('');
   const [iv, setIv] = useState('');
   const [input, setInput] = useState('');
@@ -90,6 +187,25 @@ function App() {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Settings corner */}
+      <div className="fixed top-4 right-4 flex items-center gap-3 z-10">
+        <Toggle
+          checked={mode === 'dark'}
+          onChange={v => setMode(v ? 'dark' : 'light')}
+          label="dark"
+        />
+        <Dropdown
+          value={theme}
+          onChange={setTheme}
+          width="w-32"
+          options={[
+            { value: 'zinc',   label: 'zinc'     },
+            { value: 'arctic', label: 'arctic'   },
+            { value: 'stone',  label: 'stone'    },
+            { value: 'hc',     label: 'contrast' },
+          ]}
+        />
+      </div>
       <div className="max-w-3xl mx-auto pt-16 px-4 pb-12">
 
         {/* Title */}
