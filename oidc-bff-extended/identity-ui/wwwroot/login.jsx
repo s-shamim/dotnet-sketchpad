@@ -89,7 +89,7 @@ function LoginApp() {
   // Load login context from IDS on mount
   React.useEffect(() => {
     if (!returnUrl.current) { setContextReady(true); return; }
-    const url = `https://localhost:5203/api/ids/login?returnUrl=${encodeURIComponent(returnUrl.current)}`;
+    const url = `https://identity.localhost:5203/api/ids/login?returnUrl=${encodeURIComponent(returnUrl.current)}`;
     fetch(url, { credentials: 'include' })
       .then(r => r.json())
       .then(d => {
@@ -105,7 +105,7 @@ function LoginApp() {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch('https://localhost:5203/api/ids/login', {
+      const res = await fetch('https://identity.localhost:5203/api/ids/login', {
         method:      'POST',
         credentials: 'include',
         headers:     { 'Content-Type': 'application/json' },
@@ -120,7 +120,7 @@ function LoginApp() {
       // Redirect back to IDS to complete the authorize flow
       window.location.href = data.redirectUrl;
     } catch {
-      setError('unable to reach identity server. ensure it is running on port 5203.');
+      setError('unable to reach identity server. ensure it is running at https://identity.localhost:5203.');
       setLoading(false);
     }
   }

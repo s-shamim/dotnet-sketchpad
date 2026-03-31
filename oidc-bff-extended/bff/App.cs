@@ -16,7 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 // ── CORS — allow Shell to call BFF endpoints with credentials ─────────────────
 builder.Services.AddCors(opt =>
     opt.AddDefaultPolicy(p => p
-        .WithOrigins("https://localhost:5201")
+        .WithOrigins("https://shell.localhost:5201")
         .AllowAnyHeader()
         .AllowAnyMethod()
         .AllowCredentials()));
@@ -39,7 +39,7 @@ builder.Services.AddAuthentication(opt =>
 })
 .AddOpenIdConnect(opt =>
 {
-    opt.Authority      = "https://localhost:5203";
+    opt.Authority      = "https://identity.localhost:5203";
     opt.ClientId       = "bff-client";
     opt.ClientSecret   = "bff-secret";
     opt.ResponseType   = "code";
@@ -77,7 +77,7 @@ builder.Services.AddAuthorization();
 // ── HttpClient for proxying to Inventory API ──────────────────────────────────
 builder.Services.AddHttpClient("inventory", c =>
 {
-    c.BaseAddress = new Uri("https://localhost:5202");
+    c.BaseAddress = new Uri("https://api.localhost:5202");
 }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
 {
     ServerCertificateCustomValidationCallback = (_, _, _, _) => true
@@ -158,7 +158,7 @@ app.MapGet("/bff/signin-complete", async (HttpContext ctx) =>
     await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
     // Redirect back to the Shell SPA
-    return Results.Redirect("https://localhost:5201");
+    return Results.Redirect("https://shell.localhost:5201");
 });
 
 // GET /bff/user — returns authenticated user info from the GUID session (never 401s)
@@ -184,8 +184,8 @@ app.MapGet("/bff/logout", async (HttpContext ctx) =>
     // Initiate IDS end-session endpoint so the IDS session cookie is also cleared.
     // The OIDC Cookie scheme is already gone, so we trigger the sign-out by redirecting
     // to IDS /connect/endsession with post_logout_redirect_uri.
-    var postLogoutUri = Uri.EscapeDataString("https://localhost:5205/bff/post-logout");
-    return Results.Redirect($"https://localhost:5203/connect/endsession?post_logout_redirect_uri={postLogoutUri}");
+    var postLogoutUri = Uri.EscapeDataString("https://bff.localhost:5205/bff/post-logout");
+    return Results.Redirect($"https://identity.localhost:5203/connect/endsession?post_logout_redirect_uri={postLogoutUri}");
 });
 
 // GET /bff/post-logout — IDS redirects here after server-side sign-out completes.
@@ -198,7 +198,7 @@ app.MapGet("/bff/post-logout", (HttpContext ctx) =>
         sessions.TryRemove(guid, out _);
         ctx.Response.Cookies.Delete("bff-session");
     }
-    return Results.Redirect("https://localhost:5201");
+    return Results.Redirect("https://shell.localhost:5201");
 });
 
 // ── Proxy endpoints — forward requests to Inventory API with Bearer token ─────

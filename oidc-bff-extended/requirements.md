@@ -1,4 +1,4 @@
-# OIDC BFF Extended — Requirements Document
+﻿# OIDC BFF Extended — Requirements Document
 
 A 5-app demo demonstrating a production-like OIDC / BFF (Backend-for-Frontend) architecture using .NET 10 file-based apps, Duende Identity Server, and a custom BFF token-relay pattern — with **Inventory Management** as the resource domain.
 
@@ -21,7 +21,7 @@ A 5-app demo demonstrating a production-like OIDC / BFF (Backend-for-Frontend) a
              ▼ 5205                                     │ fetch
     ┌─────────────────┐                                 │ /api/ids/login
     │   BFF Backend   │                                 ▼ 5203
-    │  (token relay,  │◄──────── OIDC code flow ──►┌──────────────────┐
+    │  (token relay,  │◄──────── OIDC code flow ──► ┌──────────────────┐
     │  GUID sessions) │                             │ Identity Server  │
     │  App 5 · 5205   │                             │ (Duende IDS,     │
     └────────┬────────┘                             │  no UI)          │
@@ -56,18 +56,18 @@ Step 1: User visits Shell (5201) → not authenticated → clicks "Login"
 Step 2: Shell redirects browser to → BFF /bff/login (5205)
 Step 3: BFF issues OIDC Challenge → browser redirected to Identity Server
            /connect/authorize?client_id=bff-client&response_type=code&scope=openid+profile+inventory
-           &redirect_uri=https://localhost:5205/bff/signin-oidc
+           &redirect_uri=https://bff.localhost:5205/bff/signin-oidc
            &code_challenge=...&code_challenge_method=S256&state=...
 Step 4: Identity Server (5203) resolves login → redirects browser to
            Identity UI (5204) /login.html?returnUrl=<encoded-authorize-url>
 Step 5: Identity UI (5204) JSX form POSTs credentials to
-           POST https://localhost:5203/api/ids/login   { credentials: 'include' }
+           POST https://identity.localhost:5203/api/ids/login   { credentials: 'include' }
            ← returns { redirectUrl: "<authorize-continue-url>" }
 Step 6: Identity UI JS does window.location.href = redirectUrl
            → browser navigates to 5203 authorize endpoint
            → IDS sets its session cookie and completes the authorize request
            → IDS redirects browser to callback:
-           https://localhost:5205/bff/signin-oidc?code=...&state=...
+           https://bff.localhost:5205/bff/signin-oidc?code=...&state=...
 Step 7: BFF OIDC middleware handles /bff/signin-oidc callback:
            - Exchanges code for tokens (back-channel POST to /connect/token on 5203)
            - Stores tokens in ASP.NET session (Cookie scheme)
@@ -78,7 +78,7 @@ Step 8: BFF /bff/signin-complete handler:
            - Stores GUID → { AccessToken, Sub, Name, ExpiresAt } in ConcurrentDictionary
            - Sets a bff-session cookie (HttpOnly, Secure, SameSite=Lax) containing the GUID
            - Signs out of the OIDC Cookie scheme (clears server-side token cookie)
-           - Redirects browser back to Shell (https://localhost:5201)
+           - Redirects browser back to Shell (https://shell.localhost:5201)
 Step 9: Shell fetches GET /bff/user with credentials:include
            - BFF reads the bff-session cookie, looks up the GUID in the ConcurrentDictionary
            - Returns { authenticated: true, name: "...", sub: "..." }
@@ -99,13 +99,13 @@ Step 10: Shell renders user info card + inventory list via GET /bff/api/items
 - No NuGet packages beyond the SDK
 
 **UI (`wwwroot/index.html` + `script.jsx`):**
-- On load: `GET https://localhost:5205/bff/user` (with `credentials:'include'`)
-- **Unauthenticated state:** Hero section, welcome text, "Sign in" ghost button that navigates to `https://localhost:5205/bff/login`
+- On load: `GET https://bff.localhost:5205/bff/user` (with `credentials:'include'`)
+- **Unauthenticated state:** Hero section, welcome text, "Sign in" ghost button that navigates to `https://bff.localhost:5205/bff/login`
 - **Authenticated state:**
-  - User info card (name, sub, "sign out" link → `https://localhost:5205/bff/logout`)
-  - Inventory table: fetches `GET https://localhost:5205/bff/api/items` with `credentials:'include'`
-  - "Add item" form (name, quantity, category, price) — posts to `POST https://localhost:5205/bff/api/items`
-  - Delete button per row — calls `DELETE https://localhost:5205/bff/api/items/{id}`
+  - User info card (name, sub, "sign out" link → `https://bff.localhost:5205/bff/logout`)
+  - Inventory table: fetches `GET https://bff.localhost:5205/bff/api/items` with `credentials:'include'`
+  - "Add item" form (name, quantity, category, price) — posts to `POST https://bff.localhost:5205/bff/api/items`
+  - Delete button per row — calls `DELETE https://bff.localhost:5205/bff/api/items/{id}`
 - Theme Dropdown + dark mode Toggle per design system (zinc default, 4 themes)
 
 ---
@@ -144,10 +144,10 @@ record InventoryItem(int Id, string Name, int Quantity, string Category, decimal
 | `DELETE` | `/api/items/{id}` | Delete item    |
 
 **JWT Configuration:**
-- Authority: `https://localhost:5203`
+- Authority: `https://identity.localhost:5203`
 - Audience: `inventory-api`
 - `RequireHttpsMetadata: false` (self-signed dev cert)
-- Adds CORS policy allowing origin `https://localhost:5205` (BFF makes server-to-server calls, but CORS still needed)
+- Adds CORS policy allowing origin `https://bff.localhost:5205` (BFF makes server-to-server calls, but CORS still needed)
 
 ---
 
@@ -163,10 +163,10 @@ record InventoryItem(int Id, string Name, int Quantity, string Category, decimal
 **IDS Configuration:**
 
 ```
-IssuerUri:   https://localhost:5203
-LoginUrl:    https://localhost:5204/login.html     ← Identity UI
-LogoutUrl:   https://localhost:5204/logout.html
-ErrorUrl:    https://localhost:5204/error.html
+IssuerUri:   https://identity.localhost:5203
+LoginUrl:    https://identity-ui.localhost:5204/login.html     ← Identity UI
+LogoutUrl:   https://identity-ui.localhost:5204/logout.html
+ErrorUrl:    https://identity-ui.localhost:5204/error.html
 
 PAR (Pushed Authorization Request): DISABLED
   Reason: .NET OIDC middleware defaults to UseIfAvailable and sends PAR
@@ -175,18 +175,18 @@ PAR (Pushed Authorization Request): DISABLED
 
 **Client — `bff-client`:**
 
-| Setting                  | Value                                            |
-| ------------------------ | ------------------------------------------------ |
-| `ClientId`               | `bff-client`                                     |
-| `ClientSecret`           | `bff-secret` (SHA-256 hashed)                    |
-| `AllowedGrantTypes`      | `Code`                                           |
-| `RequirePkce`            | `true`                                           |
-| `RequireConsent`         | `false`                                          |
-| `RedirectUris`           | `https://localhost:5205/bff/signin-oidc`         |
-| `PostLogoutRedirectUris` | `https://localhost:5205/bff/post-logout`         |
-| `FrontChannelLogoutUri`  | `https://localhost:5205/bff/frontchannel-logout` |
-| `AllowedScopes`          | `openid`, `profile`, `inventory`                 |
-| `AllowOfflineAccess`     | `false` (no refresh tokens in this demo)         |
+| Setting                  | Value                                                |
+| ------------------------ | ---------------------------------------------------- |
+| `ClientId`               | `bff-client`                                         |
+| `ClientSecret`           | `bff-secret` (SHA-256 hashed)                        |
+| `AllowedGrantTypes`      | `Code`                                               |
+| `RequirePkce`            | `true`                                               |
+| `RequireConsent`         | `false`                                              |
+| `RedirectUris`           | `https://bff.localhost:5205/bff/signin-oidc`         |
+| `PostLogoutRedirectUris` | `https://bff.localhost:5205/bff/post-logout`         |
+| `FrontChannelLogoutUri`  | `https://bff.localhost:5205/bff/frontchannel-logout` |
+| `AllowedScopes`          | `openid`, `profile`, `inventory`                     |
+| `AllowOfflineAccess`     | `false` (no refresh tokens in this demo)             |
 
 **Identity Resources:** `openid`, `profile`
 
@@ -208,7 +208,7 @@ bob   / bob    →  name: Bob Jones,   email: bob@example.com
 | `POST` | `/api/ids/login`  | Validate credentials, sign in to IDS cookie, return `{ redirectUrl }`                     |
 | `GET`  | `/api/ids/logout` | Complete IDS server-side sign-out, return `{ redirectUrl }`                               |
 
-**CORS:** Allow origin `https://localhost:5204` (Identity UI) with credentials.
+**CORS:** Allow origin `https://identity-ui.localhost:5204` (Identity UI) with credentials.
 
 ---
 
@@ -224,15 +224,15 @@ bob   / bob    →  name: Bob Jones,   email: bob@example.com
 **Files (`wwwroot/`):**
 
 - **`login.html`** — React login form
-  - On load: `GET https://localhost:5203/api/ids/login?returnUrl=<decoded-returnUrl>` (credentials: include)
+  - On load: `GET https://identity.localhost:5203/api/ids/login?returnUrl=<decoded-returnUrl>` (credentials: include)
     → shows `clientName` if present, `loginHint` pre-fills username
-  - Submit: `POST https://localhost:5203/api/ids/login` body `{ username, password, returnUrl }`
+  - Submit: `POST https://identity.localhost:5203/api/ids/login` body `{ username, password, returnUrl }`
     → on success: `window.location.href = response.redirectUrl`
   - Error display below form
   - Test credentials hint: `alice / alice` or `bob / bob`
 
 - **`logout.html`** — Handles IDS post-sign-out
-  - On load: `GET https://localhost:5203/api/ids/logout?logoutId=<from-query>` (credentials: include)
+  - On load: `GET https://identity.localhost:5203/api/ids/logout?logoutId=<from-query>` (credentials: include)
   - On success: `window.location.href = response.redirectUrl`
 
 - **`error.html`** — Generic error page, reads `?errorId` from query string
@@ -263,7 +263,7 @@ DefaultScheme:          Cookie ("bff.oidc")
 DefaultChallengeScheme: OpenIdConnect
 
 OIDC:
-  Authority:     https://localhost:5203
+  Authority:     https://identity.localhost:5203
   ClientId:      bff-client
   ClientSecret:  bff-secret
   ResponseType:  code
@@ -280,18 +280,18 @@ Cookie:
 
 **Endpoints:**
 
-| Method   | Path                   | Description                                                                        |
-| -------- | ---------------------- | ---------------------------------------------------------------------------------- |
-| `GET`    | `/bff/login`           | Issues OIDC challenge → redirects to IDS                                           |
-| `GET`    | `/bff/signin-oidc`     | OIDC callback — handled by middleware                                              |
-| `GET`    | `/bff/signin-complete` | Post-callback: creates GUID session, sets `bff-session` cookie, redirects to Shell |
-| `GET`    | `/bff/post-logout`     | IDS post-logout redirect: clears GUID session + cookie, redirects to Shell         |
-| `GET`    | `/bff/user`            | Returns `{ authenticated, name, sub }` from GUID session (never 401s)              |
-| `GET`    | `/bff/logout`          | Looks up GUID session, removes it, clears cookie, initiates IDS end-session        |
-| `GET`    | `/bff/api/items`       | Proxied → `GET https://localhost:5202/api/items` with `Authorization: Bearer <at>` |
-| `POST`   | `/bff/api/items`       | Proxied → `POST https://localhost:5202/api/items`                                  |
-| `PUT`    | `/bff/api/items/{id}`  | Proxied → `PUT https://localhost:5202/api/items/{id}`                              |
-| `DELETE` | `/bff/api/items/{id}`  | Proxied → `DELETE https://localhost:5202/api/items/{id}`                           |
+| Method   | Path                   | Description                                                                            |
+| -------- | ---------------------- | -------------------------------------------------------------------------------------- |
+| `GET`    | `/bff/login`           | Issues OIDC challenge → redirects to IDS                                               |
+| `GET`    | `/bff/signin-oidc`     | OIDC callback — handled by middleware                                                  |
+| `GET`    | `/bff/signin-complete` | Post-callback: creates GUID session, sets `bff-session` cookie, redirects to Shell     |
+| `GET`    | `/bff/post-logout`     | IDS post-logout redirect: clears GUID session + cookie, redirects to Shell             |
+| `GET`    | `/bff/user`            | Returns `{ authenticated, name, sub }` from GUID session (never 401s)                  |
+| `GET`    | `/bff/logout`          | Looks up GUID session, removes it, clears cookie, initiates IDS end-session            |
+| `GET`    | `/bff/api/items`       | Proxied → `GET https://api.localhost:5202/api/items` with `Authorization: Bearer <at>` |
+| `POST`   | `/bff/api/items`       | Proxied → `POST https://api.localhost:5202/api/items`                                  |
+| `PUT`    | `/bff/api/items/{id}`  | Proxied → `PUT https://api.localhost:5202/api/items/{id}`                              |
+| `DELETE` | `/bff/api/items/{id}`  | Proxied → `DELETE https://api.localhost:5202/api/items/{id}`                           |
 
 **`bff-session` Cookie:**
 - `HttpOnly: true` — inaccessible to JavaScript
@@ -299,18 +299,18 @@ Cookie:
 - `SameSite: Lax`
 - Value: GUID string (not the access token)
 
-**CORS:** Allow origin `https://localhost:5201` (Shell) with credentials.
+**CORS:** Allow origin `https://shell.localhost:5201` (Shell) with credentials.
 
 ---
 
 ## 5. CORS Matrix
 
-| Origin                                 | Target                                   | Allow?           | Credentials |
-| -------------------------------------- | ---------------------------------------- | ---------------- | ----------- |
-| `https://localhost:5204` (Identity UI) | `https://localhost:5203` (IDS)           | ✅               | Yes         |
-| `https://localhost:5201` (Shell)       | `https://localhost:5205` (BFF)           | ✅               | Yes         |
-| `https://localhost:5205` (BFF)         | `https://localhost:5202` (Inventory API) | server-to-server | N/A         |
-| Any other                              | Any app                                  | ❌               | —           |
+| Origin                                             | Target                                       | Allow?           | Credentials |
+| -------------------------------------------------- | -------------------------------------------- | ---------------- | ----------- |
+| `https://identity-ui.localhost:5204` (Identity UI) | `https://identity.localhost:5203` (IDS)      | ✅               | Yes         |
+| `https://shell.localhost:5201` (Shell)             | `https://bff.localhost:5205` (BFF)           | ✅               | Yes         |
+| `https://bff.localhost:5205` (BFF)                 | `https://api.localhost:5202` (Inventory API) | server-to-server | N/A         |
+| Any other                                          | Any app                                      | ❌               | —           |
 
 ---
 
@@ -324,6 +324,7 @@ Cookie:
 - **Server certificate validation disabled locally.** All `HttpClient` instances use `ServerCertificateCustomValidationCallback = (_, _, _, _) => true` because all apps share a self-signed dev cert.
 - **In-memory session store.** The BFF uses `ConcurrentDictionary` — all sessions are lost on restart. A production BFF would use `IDistributedCache` (Redis, etc.).
 - **In-memory inventory data.** The API uses `ConcurrentDictionary<int, InventoryItem>` seeded at startup. A production app would use EF Core + a persistent database.
+- **`*.localhost` subdomains require a wildcard TLS certificate.** The .NET dev cert (`dotnet dev-certs https --trust`) only covers `localhost`, not `shell.localhost` etc. For local development without browser cert warnings, generate a trusted wildcard cert: `mkcert -install && mkcert localhost '*.localhost'`. Alternatively, launch each app with `dotnet run --urls http://...` to use HTTP — but you must also change the `bff-session` cookie `Secure` flag to `false` and update `RequireHttpsMetadata` on JWT validation.
 
 ---
 

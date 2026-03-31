@@ -14,7 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 //    potential direct debugging. All actual API traffic comes via BFF (no browser direct).
 builder.Services.AddCors(opt =>
     opt.AddDefaultPolicy(p => p
-        .WithOrigins("https://localhost:5205")
+        .WithOrigins("https://bff.localhost:5205")
         .AllowAnyHeader()
         .AllowAnyMethod()
         .AllowCredentials()));
@@ -23,7 +23,7 @@ builder.Services.AddCors(opt =>
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opt =>
     {
-        opt.Authority            = "https://localhost:5203";
+        opt.Authority            = "https://identity.localhost:5203";
         opt.Audience             = "inventory-api";
         opt.RequireHttpsMetadata = false;
         opt.BackchannelHttpHandler = new HttpClientHandler
