@@ -109,6 +109,10 @@ function PropertiesPanel({ nodes, edges, selectedIds, dispatch }) {
 
   // ── Edge properties ──────────────────────────────────────────────────────────
   if (edge) {
+    const es = edge.style || {};
+    function updateEdgeStyle(key, val) {
+      dispatch({ type: 'UPDATE_EDGE_STYLE', id, key, val });
+    }
     return (
       <aside className="w-56 shrink-0 border-l border-gray-100 bg-white flex flex-col overflow-y-auto">
         <div className="px-4 py-3 border-b border-gray-100">
@@ -121,6 +125,35 @@ function PropertiesPanel({ nodes, edges, selectedIds, dispatch }) {
             placeholder="edge label..."
             onChange={e => dispatch({ type: 'UPDATE_EDGE_LABEL', id, label: e.target.value })}
           />
+        </Section>
+        <Section title="stroke">
+          <div className="flex flex-col gap-3">
+            <ColorRow label="color" value={es.strokeColor || '#9ca3af'} onChange={v => updateEdgeStyle('strokeColor', v)} />
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 lowercase w-16 shrink-0">width ({es.strokeWidth || 1.5}px)</span>
+              <input type="range" min={0.5} max={8} step={0.5}
+                value={es.strokeWidth || 1.5}
+                onChange={e => updateEdgeStyle('strokeWidth', +e.target.value)}
+                className="flex-1 accent-gray-500"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] text-gray-400 uppercase tracking-widest">style</span>
+              <div className="flex gap-1">
+                {[['solid','solid'],['dashed','dashed'],['dotted','dotted']].map(([val, lbl]) => (
+                  <button key={val}
+                    onClick={() => updateEdgeStyle('strokeDash', val)}
+                    className={`flex-1 py-1 text-xs rounded-sm border transition-colors lowercase ${
+                      (es.strokeDash || 'solid') === val
+                        ? 'border-gray-400 text-gray-800 bg-gray-100'
+                        : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                    }`}>
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </Section>
       </aside>
     );

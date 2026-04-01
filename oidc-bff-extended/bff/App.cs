@@ -1,7 +1,6 @@
 #:property PublishAot=false
 #:sdk Microsoft.NET.Sdk.Web
 #:package Microsoft.AspNetCore.Authentication.OpenIdConnect@10.*
-#:package Microsoft.AspNetCore.Authentication.Cookies@10.*
 
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -12,6 +11,31 @@ using System.Net.Http.Headers;
 // ── Bootstrap ──────────────────────────────────────────────────────────────────
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ── *.localhost DNS fix ───────────────────────────────────────────────────────
+// Browsers resolve *.localhost → 127.0.0.1 automatically, but the .NET DNS
+// resolver on Windows does not. This handler intercepts all backchannel HTTP
+// calls (OIDC discovery, token exchange, JWKS fetch) and dials 127.0.0.1
+// directly for any *.localhost hostname, bypassing the missing DNS entry.
+static HttpMessageHandler SubdomainLocalhostHandler() =>
+    new SocketsHttpHandler
+    {
+        SslOptions = new System.Net.Security.SslClientAuthenticationOptions
+        {
+            RemoteCertificateValidationCallback = (_, _, _, _) => true,
+        },
+        ConnectCallback = async (ctx, ct) =>
+        {
+            var host = ctx.DnsEndPoint.Host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase)
+                ? "127.0.0.1" : ctx.DnsEndPoint.Host;
+            var socket = new System.Net.Sockets.Socket(
+                System.Net.Sockets.AddressFamily.InterNetwork,
+                System.Net.Sockets.SocketType.Stream,
+                System.Net.Sockets.ProtocolType.Tcp) { NoDelay = true };
+            await socket.ConnectAsync(host, ctx.DnsEndPoint.Port, ct);
+            return new System.Net.Sockets.NetworkStream(socket, ownsSocket: true);
+        }
+    };
 
 // ── CORS — allow Shell to call BFF endpoints with credentials ─────────────────
 builder.Services.AddCors(opt =>
@@ -66,10 +90,7 @@ builder.Services.AddAuthentication(opt =>
         return Task.CompletedTask;
     };
 
-    opt.BackchannelHttpHandler = new HttpClientHandler
-    {
-        ServerCertificateCustomValidationCallback = (_, _, _, _) => true
-    };
+    opt.BackchannelHttpHandler = SubdomainLocalhostHandler();
 });
 
 builder.Services.AddAuthorization();
@@ -78,10 +99,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddHttpClient("inventory", c =>
 {
     c.BaseAddress = new Uri("https://api.localhost:5202");
-}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-{
-    ServerCertificateCustomValidationCallback = (_, _, _, _) => true
-});
+}).ConfigurePrimaryHttpMessageHandler(SubdomainLocalhostHandler);
 
 builder.WebHost.UseKestrel(o =>
     o.ListenLocalhost(5205, lo => lo.UseHttps()));

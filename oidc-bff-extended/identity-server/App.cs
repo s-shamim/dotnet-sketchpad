@@ -46,6 +46,8 @@ builder.Services.AddIdentityServer(opt =>
 .AddTestUsers(IdsConfig.TestUsers)
 .AddDeveloperSigningCredential();
 
+builder.Services.AddAuthorization();
+
 builder.WebHost.UseKestrel(o =>
     o.ListenLocalhost(5203, lo => lo.UseHttps()));
 

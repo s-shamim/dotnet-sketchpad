@@ -114,6 +114,41 @@ function contentReducer(content, action) {
     case 'UPDATE_GROUP_LABEL':
       return { ...content, groups: groups.map(g => g.id === action.id ? { ...g, label: action.label } : g) };
 
+    case 'CHANGE_NODE_TYPE':
+      return { ...content, nodes: nodes.map(n => n.id === action.id ? { ...n, type: action.nodeType } : n) };
+
+    case 'ADD_NODES':
+      return { ...content, nodes: [...nodes, ...action.nodes] };
+
+    case 'ADD_EDGES':
+      return { ...content, edges: [...edges, ...action.edges] };
+
+    case 'UPDATE_EDGE_STYLE':
+      return {
+        ...content,
+        edges: edges.map(e => e.id === action.id
+          ? { ...e, style: { ...(e.style || {}), [action.key]: action.val } }
+          : e
+        )
+      };
+
+    case 'DUPLICATE_NODES': {
+      const { ids, dx = 20, dy = 20 } = action;
+      const idSet = new Set(ids);
+      const srcNodes = nodes.filter(n => idSet.has(n.id));
+      const idMap = {};
+      const newNodes = srcNodes.map(n => {
+        const newId = 'n' + Date.now() + Math.random().toString(36).slice(2, 6);
+        idMap[n.id] = newId;
+        return { ...n, id: newId, x: n.x + dx, y: n.y + dy };
+      });
+      // Re-create edges that connect two duplicated nodes
+      const newEdges = edges
+        .filter(e => idSet.has(e.fromId) && idSet.has(e.toId))
+        .map(e => ({ ...e, id: 'e' + Date.now() + Math.random().toString(36).slice(2, 6), fromId: idMap[e.fromId], toId: idMap[e.toId] }));
+      return { ...content, nodes: [...nodes, ...newNodes], edges: [...edges, ...newEdges] };
+    }
+
     default:
       return content;
   }
@@ -131,6 +166,12 @@ function historyReducer(state, action) {
   if (action.type === 'REDO') {
     if (future.length === 0) return state;
     return { past: [...past, present], present: future[0], future: future.slice(1) };
+  }
+
+  // COMMIT_MOVE: push current present to past as the undo snapshot (content unchanged)
+  if (action.type === 'COMMIT_MOVE') {
+    if (past.length > 0 && past[past.length - 1] === present) return state;
+    return { past: [...past.slice(-49), present], present, future: [] };
   }
 
   // Mutations that don't push history (e.g. incremental drag/resize moves)
@@ -200,11 +241,11 @@ async function apiFetch(path, opts = {}) {
 // ── Tool sidebar ──────────────────────────────────────────────────────────────
 
 const TOOLS = [
-  { id: 'select',  icon: 'cursor',          label: 'select'  },
-  { id: 'rect',    icon: 'rectangle',       label: 'rect'    },
-  { id: 'diamond', icon: 'diamond',         label: 'diamond' },
-  { id: 'edge',    icon: 'arrow-right',     label: 'edge'    },
-  { id: 'group',   icon: 'selection-plus',  label: 'group'   },
+  { id: 'select',  icon: 'cursor',         label: 'select'  },
+  { id: 'rect',    icon: 'rectangle',      label: 'rect'    },
+  { id: 'diamond', icon: 'diamond',        label: 'diamond' },
+  { id: 'circle',  icon: 'circle',         label: 'circle'  },
+  { id: 'group',   icon: 'selection-plus', label: 'group'   },
 ];
 
 function ToolSidebar({ activeTool, setActiveTool, onGroup, canGroup }) {
@@ -648,5 +689,50 @@ function App() {
     </div>
   );
 }
+
+// ── SHAPE_REGISTRY & FlowChart extension API ─────────────────────────────────
+// Built-in shapes live here; external shape files (wwwroot/shapes/*.jsx) call
+// FlowChart.registerShape({ id, label, icon, defaultW, defaultH, render, ports })
+// before app.jsx is evaluated.
+
+const SHAPE_REGISTRY = new Map();
+
+function standardPorts(node) {
+  const { x, y, w, h } = node;
+  return [
+    { id: 'top',    x: x + w / 2, y },
+    { id: 'right',  x: x + w,     y: y + h / 2 },
+    { id: 'bottom', x: x + w / 2, y: y + h },
+    { id: 'left',   x,            y: y + h / 2 },
+  ];
+}
+
+// Register built-in shapes
+[
+  {
+    id: 'rect', label: 'rect', icon: 'rectangle', defaultW: 160, defaultH: 60,
+    render: null, // handled directly in NodeShape for performance
+    ports: standardPorts,
+  },
+  {
+    id: 'diamond', label: 'diamond', icon: 'diamond', defaultW: 160, defaultH: 80,
+    render: null,
+    ports: standardPorts,
+  },
+  {
+    id: 'circle', label: 'circle', icon: 'circle', defaultW: 120, defaultH: 80,
+    render: null,
+    ports: standardPorts,
+  },
+].forEach(s => SHAPE_REGISTRY.set(s.id, s));
+
+// Expose extension API
+window.FlowChart = {
+  registerShape(descriptor) {
+    SHAPE_REGISTRY.set(descriptor.id, descriptor);
+  },
+  standardPorts,
+  SHAPE_REGISTRY,
+};
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
