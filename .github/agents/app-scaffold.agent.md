@@ -1,13 +1,13 @@
 ---
 description: "End-to-end new app creation with convention enforcement. Scans the workspace for naming, port allocation, and structure compliance."
 tools:
-  - create_file
-  - replace_string_in_file
-  - read_file
-  - list_dir
-  - grep_search
-  - run_in_terminal
-  - file_search
+  - edit/createFile
+  - edit/editFiles
+  - read/readFile
+  - search/listDirectory
+  - search/textSearch
+  - execute/runInTerminal
+  - search/fileSearch
 ---
 
 # App Scaffold Agent
