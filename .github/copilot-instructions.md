@@ -2,9 +2,25 @@
 
 This repo is a collection of **.NET 10 file-based C# apps** — no `.csproj`, no solution files.
 
-> Detailed rules are split across focused instruction files in `.github/instructions/`:
-> - [backend.instructions.md](instructions/backend.instructions.md) — directives, templates, run config, settings, SQLite
-> - [ui.instructions.md](instructions/ui.instructions.md) — HTML/JSX stack, multi-file JSX, design system
+> See [USAGE.md](USAGE.md) for workflows, skill routing, and troubleshooting.
+
+---
+
+## Customizations Map
+
+| Type | File | Trigger | Purpose |
+|---|---|---|---|
+| Instruction | [backend.instructions.md](instructions/backend.instructions.md) | Auto: `**/*.cs` | C# directives, templates, run config, settings, SQLite |
+| Instruction | [ui.instructions.md](instructions/ui.instructions.md) | Auto: `**/*.jsx`, `**/index.html` | UI policy — design system rules, script order, file architecture |
+| Skill | `ui-shell` | On-demand | Shell primitives, shared components, typography, behavioral patterns |
+| Skill | `ui-inputs` | On-demand | Buttons, forms, navigation, actions, wizard |
+| Skill | `ui-display` | On-demand | Data display, charts, layout, feedback, overlays, media |
+| Skill | `theming` | On-demand | CSS theming system — 16 themes, CSS vars, dark mode |
+| Skill | `sqlite-efcore` | On-demand | EF Core + SQLite patterns for file-based apps |
+| Prompt | [new-app](prompts/new-app.prompt.md) | Manual | Scaffold a new single-file or folder-based app |
+| Prompt | [new-ui-section](prompts/new-ui-section.prompt.md) | Manual | Add a section to a multi-file UI app |
+| Prompt | [add-api-endpoint](prompts/add-api-endpoint.prompt.md) | Manual | Add an API endpoint to an existing App.cs |
+| Agent | [app-scaffold](agents/app-scaffold.agent.md) | Manual | End-to-end new app creation with convention enforcement |
 
 ---
 
@@ -41,9 +57,11 @@ This repo is a collection of **.NET 10 file-based C# apps** — no `.csproj`, no
   │
   ├── .github/
   │   ├── copilot-instructions.md
-  │   └── instructions/
-  │       ├── backend.instructions.md
-  │       └── ui.instructions.md
+  │   ├── USAGE.md
+  │   ├── instructions/
+  │   ├── skills/
+  │   ├── prompts/
+  │   └── agents/
   │
   ├── .vscode/
   │   └── tasks.json
@@ -82,16 +100,8 @@ This repo is a collection of **.NET 10 file-based C# apps** — no `.csproj`, no
               └── Uuid.jsx
 ```
 
----
-
 ## What NOT to Do
 
-- ❌ Never place class or type declarations before top-level statements — models and DbContext always go **after** `app.Run()`
 - ❌ Never create a `.csproj` or `.sln` file
 - ❌ Never name the entry point `Program.cs` — use `App.cs` inside folder apps
-- ❌ Never use an absolute path for SQLite or any file access
-- ❌ Never set `PublishAot=true` — always `false`
-- ❌ Never put CDN `<script>` tags in `.jsx` files — they belong in `index.html`
-- ❌ Never use a custom `app-name.settings.json` — use standard `appsettings.json`
-- ❌ Never commit secrets — use `dotnet user-secrets` for sensitive values
 - ❌ Never place file-based apps inside an existing `.csproj` directory tree

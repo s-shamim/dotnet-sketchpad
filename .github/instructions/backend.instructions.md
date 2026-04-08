@@ -231,3 +231,14 @@ Rules:
 - Use `EnsureCreated()` for simple apps (no migration history needed)
 - Seed only when the table is empty (`if (!db.Items.Any())`)
 - Connection string goes in `appsettings.json` for folder apps, inline for simple scripts
+
+---
+
+## What NOT to Do
+
+- ❌ Never set `PublishAot=true` — always `PublishAot=false`
+- ❌ Never place class or type declarations before top-level statements — models and DbContext go **after** `app.Run()`
+- ❌ Never use an absolute path for SQLite or any file access — `.db` lives next to `App.cs`
+- ❌ Never use a custom `app-name.settings.json` — use standard `appsettings.json`
+- ❌ Never commit secrets — use `dotnet user-secrets` for sensitive values
+- ❌ Never put CDN `<script>` tags in `.jsx` files — they belong in `index.html`

@@ -2,9 +2,14 @@
 applyTo: "**/*.jsx,**/index.html"
 ---
 
-# UI Instructions — Design System Index
+# UI Instructions — Design System Policy
 
-> Pure index. All implementations, examples, and ARIA details live in [ui-component-reference.instructions.md](ui-component-reference.instructions.md).
+> Lean policy index. Implementation code lives in on-demand skills:
+> - `ui-shell` — shell primitives, shared components, typography, behavioral patterns
+> - `ui-inputs` — buttons, forms, navigation, actions, wizard
+> - `ui-display` — data display, charts, layout, feedback, overlays, media
+> - `theming` — CSS theming system, all 16 themes, CSS vars, dark mode
+>
 > The canonical living reference is `ui-showcase/wwwroot/`.
 
 ---
@@ -51,31 +56,33 @@ CDN `<script>` tags in `<head>` only, never in `.jsx`. Use `?v=N` cache-busting 
 
 ## Component Registry
 
-All implementations → [ui-component-reference.instructions.md](ui-component-reference.instructions.md).
+Implementations are in on-demand skills — invoke the right one for your task.
 
-**App Shell** (`app.jsx`): `Icon`, `SectionTitle`, `DemoBlock`, `Dropdown`
+**App Shell** (`app.jsx`) → `ui-shell`: `Icon`, `SectionTitle`, `DemoBlock`, `Dropdown`
 
-**Shared** (`shared.jsx`): `Toggle`, `SidebarNav`, `Spinner`, `SearchInput`
+**Shared** (`shared.jsx`) → `ui-shell`: `Toggle`, `SidebarNav`, `Spinner`, `SearchInput`
 
-**Forms**: Text input, `Textarea`, `Checkbox`, `RadioGroup`, `DatePicker`, `KVEditor`, Input states
+**Forms** → `ui-inputs`: Text input, `Textarea`, `Checkbox`, `RadioGroup`, `DatePicker`, `KVEditor`, Input states
 
-**Navigation**: `Tabs`, `Breadcrumbs`
+**Buttons** → `ui-inputs`: Text, ghost, icon, sizes, loading state, states
 
-**Feedback**: `Badge`, `Alert`, `Toast` + `useToast`, `Skeleton`
+**Navigation** → `ui-inputs`: `Tabs`, `Breadcrumbs`
 
-**Overlays**: `Modal`, `ConfirmModal`, `Tooltip`, `Drawer`
+**Actions** → `ui-inputs`: Button group, Split button, `DangerButton`
 
-**Data Display**: `CodeBlock`, `DataTable`, `EmptyState`, `Tag`, `ProgressBar`, `Pagination`, `FilterModal`
+**Wizard** → `ui-inputs`: `Wizard`, Step component contract
 
-**Charts** (SVG, no library): `Sparkline`, Bar chart, Line chart, Donut chart
+**Feedback** → `ui-display`: `Badge`, `Alert`, `Toast` + `useToast`, `Skeleton`
 
-**Layout**: `Collapsible`, Labeled divider, Card, Field group, Panel, List group, Split pane, Inline group
+**Overlays** → `ui-display`: `Modal`, `ConfirmModal`, `Tooltip`, `Drawer`
 
-**Media**: Carousel, Image grid, Lightbox
+**Data Display** → `ui-display`: `CodeBlock`, `DataTable`, `EmptyState`, `Tag`, `ProgressBar`, `Pagination`, `FilterModal`
 
-**Actions**: Button group, Split button, `DangerButton`
+**Charts** → `ui-display` (SVG, no library): `Sparkline`, Bar chart, Line chart, Donut chart
 
-**Wizard**: `Wizard`, Step component contract
+**Layout** → `ui-display`: `Collapsible`, Labeled divider, Card, Field group, Panel, List group, Split pane, Inline group
+
+**Media** → `ui-display`: Carousel, Image grid, Lightbox
 
 ---
 
@@ -89,8 +96,28 @@ All implementations → [ui-component-reference.instructions.md](ui-component-re
 - `font-light` only for `text-2xl`+ headings
 - `font-medium` only for active sidebar nav items (paired with `bg-gray-200`)
 - Destructive actions: gray first → armed confirmation → red only after arming
+- Phosphor icons: `ph-light` weight only — never `ph-bold` or `ph-fill`
+- Toggle thumb: always `var(--toggle-thumb)` — never `bg-white`
 
-**Status colors** — the only non-gray palette:
+---
+
+## CSS Variables (quick reference)
+
+| Variable | Role |
+|---|---|
+| `--gray-50` … `--gray-900` | Full gray scale — remapped per theme |
+| `--color-white` | Surface backgrounds (dark mode maps to a dark tone) |
+| `--toggle-thumb` | Toggle thumb color |
+| `--overlay-bg` | Tooltip/overlay background |
+| `--overlay-text` | Tooltip/overlay text |
+| `--accent` | Theme accent (darkest meaningful tone) |
+| `--accent-fg` | Foreground on accent background |
+
+---
+
+## Status Colors
+
+The only non-gray palette permitted:
 
 | Semantic | Text | Background | Border |
 |---|---|---|---|
@@ -98,6 +125,9 @@ All implementations → [ui-component-reference.instructions.md](ui-component-re
 | Success | `text-green-600` | `bg-green-50` | `border-green-200` |
 | Error | `text-red-500` | `bg-red-50` | `border-red-200` |
 | Warning | `text-yellow-600` | `bg-yellow-50` | `border-yellow-200` |
+| Info | `text-blue-600` | `bg-blue-50` | `border-blue-200` |
+
+Never use saturated variants (`green-500` bg, `red-700` text, etc.).
 | Info | `text-blue-600` | `bg-blue-50` | `border-blue-200` |
 
 Never use saturated variants (`green-500` bg, `red-700` text, etc.).
