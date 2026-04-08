@@ -18,7 +18,7 @@ function ErrorApp() {
           {errorId && <span className="block mt-1 font-mono text-xs text-gray-400 break-all">error id: {errorId}</span>}
         </p>
         <a
-          href="https://shell.localhost:5201"
+          href="https://localhost:5201"
           className="text-sm text-gray-600 border border-gray-200 px-4 py-2 rounded-sm hover:border-gray-400 transition-colors lowercase"
         >
           return to app

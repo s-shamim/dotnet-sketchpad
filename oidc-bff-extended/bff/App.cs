@@ -12,11 +12,10 @@ using System.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── *.localhost DNS fix ───────────────────────────────────────────────────────
-// Browsers resolve *.localhost → 127.0.0.1 automatically, but the .NET DNS
-// resolver on Windows does not. This handler intercepts all backchannel HTTP
-// calls (OIDC discovery, token exchange, JWKS fetch) and dials 127.0.0.1
-// directly for any *.localhost hostname, bypassing the missing DNS entry.
+// ── Dev-cert SSL bypass ───────────────────────────────────────────────────────
+// All apps run on https://localhost with the .NET dev cert (self-signed).
+// Skip certificate chain validation for backchannel HTTP calls
+// (OIDC discovery, token exchange, JWKS fetch).
 static HttpMessageHandler SubdomainLocalhostHandler() =>
     new SocketsHttpHandler
     {
@@ -24,23 +23,12 @@ static HttpMessageHandler SubdomainLocalhostHandler() =>
         {
             RemoteCertificateValidationCallback = (_, _, _, _) => true,
         },
-        ConnectCallback = async (ctx, ct) =>
-        {
-            var host = ctx.DnsEndPoint.Host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase)
-                ? "127.0.0.1" : ctx.DnsEndPoint.Host;
-            var socket = new System.Net.Sockets.Socket(
-                System.Net.Sockets.AddressFamily.InterNetwork,
-                System.Net.Sockets.SocketType.Stream,
-                System.Net.Sockets.ProtocolType.Tcp) { NoDelay = true };
-            await socket.ConnectAsync(host, ctx.DnsEndPoint.Port, ct);
-            return new System.Net.Sockets.NetworkStream(socket, ownsSocket: true);
-        }
     };
 
 // ── CORS — allow Shell to call BFF endpoints with credentials ─────────────────
 builder.Services.AddCors(opt =>
     opt.AddDefaultPolicy(p => p
-        .WithOrigins("https://shell.localhost:5201")
+        .WithOrigins("https://localhost:5201")
         .AllowAnyHeader()
         .AllowAnyMethod()
         .AllowCredentials()));
@@ -63,7 +51,7 @@ builder.Services.AddAuthentication(opt =>
 })
 .AddOpenIdConnect(opt =>
 {
-    opt.Authority      = "https://identity.localhost:5203";
+    opt.Authority      = "https://localhost:5203";
     opt.ClientId       = "bff-client";
     opt.ClientSecret   = "bff-secret";
     opt.ResponseType   = "code";
@@ -98,7 +86,7 @@ builder.Services.AddAuthorization();
 // ── HttpClient for proxying to Inventory API ──────────────────────────────────
 builder.Services.AddHttpClient("inventory", c =>
 {
-    c.BaseAddress = new Uri("https://api.localhost:5202");
+    c.BaseAddress = new Uri("https://localhost:5202");
 }).ConfigurePrimaryHttpMessageHandler(SubdomainLocalhostHandler);
 
 builder.WebHost.UseKestrel(o =>
@@ -176,7 +164,7 @@ app.MapGet("/bff/signin-complete", async (HttpContext ctx) =>
     await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
     // Redirect back to the Shell SPA
-    return Results.Redirect("https://shell.localhost:5201");
+    return Results.Redirect("https://localhost:5201");
 });
 
 // GET /bff/user — returns authenticated user info from the GUID session (never 401s)
@@ -202,8 +190,8 @@ app.MapGet("/bff/logout", async (HttpContext ctx) =>
     // Initiate IDS end-session endpoint so the IDS session cookie is also cleared.
     // The OIDC Cookie scheme is already gone, so we trigger the sign-out by redirecting
     // to IDS /connect/endsession with post_logout_redirect_uri.
-    var postLogoutUri = Uri.EscapeDataString("https://bff.localhost:5205/bff/post-logout");
-    return Results.Redirect($"https://identity.localhost:5203/connect/endsession?post_logout_redirect_uri={postLogoutUri}");
+    var postLogoutUri = Uri.EscapeDataString("https://localhost:5205/bff/post-logout");
+    return Results.Redirect($"https://localhost:5203/connect/endsession?post_logout_redirect_uri={postLogoutUri}");
 });
 
 // GET /bff/post-logout — IDS redirects here after server-side sign-out completes.
@@ -216,7 +204,7 @@ app.MapGet("/bff/post-logout", (HttpContext ctx) =>
         sessions.TryRemove(guid, out _);
         ctx.Response.Cookies.Delete("bff-session");
     }
-    return Results.Redirect("https://shell.localhost:5201");
+    return Results.Redirect("https://localhost:5201");
 });
 
 // ── Proxy endpoints — forward requests to Inventory API with Bearer token ─────

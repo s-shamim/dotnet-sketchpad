@@ -10,9 +10,9 @@ using System.Collections.Concurrent;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── *.localhost DNS fix ───────────────────────────────────────────────────────
-// Browsers resolve *.localhost → 127.0.0.1 automatically, but the .NET DNS
-// resolver on Windows does not. Used for JWT JWKS backchannel fetch from IDS.
+// ── Dev-cert SSL bypass ───────────────────────────────────────────────────────
+// All apps run on https://localhost with the .NET dev cert (self-signed).
+// Skip certificate chain validation for backchannel HTTP calls (JWT JWKS fetch).
 static HttpMessageHandler SubdomainLocalhostHandler() =>
     new SocketsHttpHandler
     {
@@ -20,24 +20,13 @@ static HttpMessageHandler SubdomainLocalhostHandler() =>
         {
             RemoteCertificateValidationCallback = (_, _, _, _) => true,
         },
-        ConnectCallback = async (ctx, ct) =>
-        {
-            var host = ctx.DnsEndPoint.Host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase)
-                ? "127.0.0.1" : ctx.DnsEndPoint.Host;
-            var socket = new System.Net.Sockets.Socket(
-                System.Net.Sockets.AddressFamily.InterNetwork,
-                System.Net.Sockets.SocketType.Stream,
-                System.Net.Sockets.ProtocolType.Tcp) { NoDelay = true };
-            await socket.ConnectAsync(host, ctx.DnsEndPoint.Port, ct);
-            return new System.Net.Sockets.NetworkStream(socket, ownsSocket: true);
-        }
     };
 
 // ── CORS — BFF makes server-to-server calls, but allow the BFF origin for any
 //    potential direct debugging. All actual API traffic comes via BFF (no browser direct).
 builder.Services.AddCors(opt =>
     opt.AddDefaultPolicy(p => p
-        .WithOrigins("https://bff.localhost:5205")
+        .WithOrigins("https://localhost:5205")
         .AllowAnyHeader()
         .AllowAnyMethod()
         .AllowCredentials()));
@@ -46,7 +35,7 @@ builder.Services.AddCors(opt =>
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opt =>
     {
-        opt.Authority            = "https://identity.localhost:5203";
+        opt.Authority            = "https://localhost:5203";
         opt.Audience             = "inventory-api";
         opt.RequireHttpsMetadata = false;
         opt.BackchannelHttpHandler = SubdomainLocalhostHandler();

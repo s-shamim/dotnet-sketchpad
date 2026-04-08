@@ -3,7 +3,7 @@
 // If authenticated: shows user info card + inventory table with add/delete.
 // If not: shows landing page with a login button.
 
-const BFF = 'https://bff.localhost:5205';
+const BFF = 'https://localhost:5205';
 
 // ── Primitives ────────────────────────────────────────────────────────────────
 

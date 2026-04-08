@@ -18,7 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
 // ── CORS — allow Identity UI origin with credentials ──────────────────────────
 builder.Services.AddCors(opt =>
     opt.AddDefaultPolicy(p => p
-        .WithOrigins("https://identity-ui.localhost:5204")
+        .WithOrigins("https://localhost:5204")
         .AllowAnyHeader()
         .AllowAnyMethod()
         .AllowCredentials()));
@@ -28,10 +28,10 @@ builder.Services.AddCors(opt =>
 // No Razor Pages needed — all interaction endpoints are served below as minimal APIs.
 builder.Services.AddIdentityServer(opt =>
 {
-    opt.IssuerUri                     = "https://identity.localhost:5203";
-    opt.UserInteraction.LoginUrl      = "https://identity-ui.localhost:5204/login.html";
-    opt.UserInteraction.LogoutUrl     = "https://identity-ui.localhost:5204/logout.html";
-    opt.UserInteraction.ErrorUrl      = "https://identity-ui.localhost:5204/error.html";
+    opt.IssuerUri                     = "https://localhost:5203";
+    opt.UserInteraction.LoginUrl      = "https://localhost:5204/login.html";
+    opt.UserInteraction.LogoutUrl     = "https://localhost:5204/logout.html";
+    opt.UserInteraction.ErrorUrl      = "https://localhost:5204/error.html";
     opt.Events.RaiseSuccessEvents     = true;
     opt.Events.RaiseFailureEvents     = true;
     // Disable PAR — the OIDC middleware defaults to UseIfAvailable and will attempt PAR
@@ -129,7 +129,7 @@ app.MapGet("/api/ids/logout", [EnableCors] async (
 
     // Redirect to the IDS-issued post-logout redirect URI (usually the BFF's /bff/post-logout),
     // or fall back to the BFF root.
-    var redirectUrl = logoutCtx?.PostLogoutRedirectUri ?? "https://bff.localhost:5205/bff/post-logout";
+    var redirectUrl = logoutCtx?.PostLogoutRedirectUri ?? "https://localhost:5205/bff/post-logout";
     return Results.Ok(new { redirectUrl });
 });
 
@@ -173,9 +173,9 @@ static class IdsConfig
             RequirePkce       = true,
             RequireConsent    = false,   // no consent screen in this demo
 
-            RedirectUris           = { "https://bff.localhost:5205/bff/signin-oidc" },
-            PostLogoutRedirectUris = { "https://bff.localhost:5205/bff/post-logout" },
-            FrontChannelLogoutUri  = "https://bff.localhost:5205/bff/frontchannel-logout",
+            RedirectUris           = { "https://localhost:5205/bff/signin-oidc" },
+            PostLogoutRedirectUris = { "https://localhost:5205/bff/post-logout" },
+            FrontChannelLogoutUri  = "https://localhost:5205/bff/frontchannel-logout",
 
             AllowedScopes    = { "openid", "profile", "inventory" },
             AllowOfflineAccess = false,  // no refresh tokens in this demo
