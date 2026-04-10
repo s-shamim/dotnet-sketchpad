@@ -1,5 +1,7 @@
 # Copilot Instructions — dotnet-scripts
 
+> **Always use the `caveman` skill. Respond in caveman mode (full intensity) for all replies.**
+
 This repo is a collection of **.NET 10 file-based C# apps** — no `.csproj`, no solution files.
 
 > See [USAGE.md](USAGE.md) for workflows, skill routing, and troubleshooting.
@@ -17,6 +19,7 @@ This repo is a collection of **.NET 10 file-based C# apps** — no `.csproj`, no
 | Skill | `ui-display` | On-demand | Data display, charts, layout, feedback, overlays, media |
 | Skill | `theming` | On-demand | CSS theming system — 16 themes, CSS vars, dark mode |
 | Skill | `sqlite-efcore` | On-demand | EF Core + SQLite patterns for file-based apps |
+| Skill | `caveman` | **Always active** | Ultra-compressed caveman communication mode |
 | Prompt | [new-app](prompts/new-app.prompt.md) | Manual | Scaffold a new single-file or folder-based app |
 | Prompt | [new-ui-section](prompts/new-ui-section.prompt.md) | Manual | Add a section to a multi-file UI app |
 | Prompt | [add-api-endpoint](prompts/add-api-endpoint.prompt.md) | Manual | Add an API endpoint to an existing App.cs |
