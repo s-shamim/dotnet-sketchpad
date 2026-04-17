@@ -1,4 +1,5 @@
 ---
+name: ui-inputs
 description: "Interactive UI controls: buttons, forms, navigation, actions, and wizard components. Use when building forms, adding user input controls, or creating multi-step workflows."
 ---
 

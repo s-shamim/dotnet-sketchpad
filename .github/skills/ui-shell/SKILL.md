@@ -1,4 +1,5 @@
 ---
+name: ui-shell
 description: "Shell primitives, shared components, typography, and behavioral patterns. Use when creating a new UI app, modifying the app shell, or adding shared interactive behavior."
 ---
 

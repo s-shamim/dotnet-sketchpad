@@ -1,4 +1,5 @@
 ---
+name: sqlite-efcore
 description: "EF Core + SQLite patterns for file-based C# apps. Use when adding database support to an app."
 ---
 

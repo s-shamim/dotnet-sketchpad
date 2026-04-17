@@ -1,4 +1,5 @@
 ---
+name: theming
 description: "CSS theming system — 16 themes, CSS vars, dark mode, flash-prevention. Use when creating or modifying theme support, themes.css, or dark mode behavior."
 ---
 

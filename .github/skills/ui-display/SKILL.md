@@ -1,4 +1,5 @@
 ---
+name: ui-display
 description: "Data display, charts, layout, feedback, overlays, and media components. Use when showing data tables, charts, modals, toast notifications, or building dashboards."
 ---
 
